@@ -877,7 +877,7 @@ $exams = [
         </section>
 
         <section id="exams" class="py-5 position-relative"
-            style="background-image: url('img/logoulit.png'); background-size: cover; background-attachment: fixed; background-position: center;">
+            style="background-image: url('img/lake.jpg'); background-size: cover; background-attachment: fixed; background-position: center;">
             <div
                 style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(247, 249, 249, 0.9);">
             </div>
