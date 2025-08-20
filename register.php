@@ -185,25 +185,27 @@ $page_title = "Register - RAIS Create";
 
             <div class="row">
               <div class="col-md-6">
-                <input type="text" class="form-control mb-3" placeholder="First Name" />
+                <form method="post" action="signup.php">
+                <input type="text" name="fName"class="form-control mb-3" placeholder="First Name" required/>
               </div>
               <div class="col-md-6">
-                <input type="text" class="form-control mb-3" placeholder="Last Name" />
+                <input type="text"  name="lName" class="form-control mb-3" placeholder="Last Name" required/>
               </div>
             </div>
 
-            <input type="text" class="form-control mb-3" placeholder="Address" />
-            <input type="text" class="form-control mb-3" placeholder="Phone Number" />
-            <input type="email" class="form-control mb-3" placeholder="Email" />
-            <input type="password" class="form-control mb-3" placeholder="Password" />
+            <input type="text"  name="address" class="form-control mb-3" placeholder="Address" required/>
+            <input type="text"  name="phone" class="form-control mb-3" placeholder="Phone Number" required />
+            <input type="email"  name="email"class="form-control mb-3" placeholder="Email" required/>
+            <input type="password"  name="password" class="form-control mb-3" placeholder="Password" required />
+            
             
             <div class="form-check mb-3">
               <input class="form-check-input" type="checkbox" id="termsCheck">
               <label class="form-check-label" for="termsCheck">I agree to the Terms & Conditions</label>
             </div>
             
-            <button class="btn w-100 fw-bold btn-register">Create Account</button>
-            
+            <button class="btn w-100 fw-bold btn-register" type="submit" name="create">Create Account</button>
+            </form>
             <div class="mt-3 text-center">
               <a href="login.php" class="text-white text-decoration-none fs-6">Already have an account? Login</a>
             </div>

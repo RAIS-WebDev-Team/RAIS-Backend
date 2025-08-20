@@ -8,9 +8,9 @@ $events = [
         "id" => "event1",
         "title" => "RCIS AT THE IELTS MINI FAIR",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/minifair2.png",
+        "image" => "../blog/img/minifair2.png",
         "alt" => "IELTS Mini Fair",
-        "url" => "blog/mini-fair.html",
+        "url" => "../blog/mini-fair.php ",
         "mapInfo" => [
             "title" => "IELTS Prep at 9.0 Niner Calamba",
             "summary" => "Reviewing English with proven techniques.",
@@ -21,9 +21,9 @@ $events = [
         "id" => "event2",
         "title" => "THE VISITATION: BRIDGING ACADEMIA AND INDUSTRY",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/lasalle.png",
+        "image" => "../blog/img/lasalle.png",
         "alt" => "Visitation from academic partners",
-        "url" => "blog/visitation.html",
+        "url" => "../blog/visitation.php",
         "mapInfo" => [
             "title" => "Student Life at La Salle Lipa",
             "summary" => "Experience education and values at La Salle.",
@@ -34,27 +34,27 @@ $events = [
         "id" => "event3",
         "title" => "A LONG ROAD FOR “A CALLING TO CANADA”",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/canada.png",
+        "image" => "../blog/img/canada.png",
         "alt" => "A Calling to Canada event",
-        "url" => "blog/canada.html",
+        "url" => "../blog/canada.php",
         "mapInfo" => null // No specific map point for this one
     ],
     [
         "id" => "event4",
         "title" => "CONNECTING WITH STUDENTS: LAGUNA ALL THE WAY",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/calamba.png",
+        "image" => "../blog/img/calamba.png",
         "alt" => "Laguna event",
-        "url" => "blog/calamba.html",
+        "url" => "../blog/calamba.php",
         "mapInfo" => null // You can add map info if needed
     ],
     [
         "id" => "event5",
         "title" => "STI LIPA & RAIS: BRIDGING EDUCATION AND INDUSTRY",
         "author" => "Published on: February 28, 2025",
-        "image" => "blog/img/Sti.png",
+        "image" => "../blog/img/Sti.png",
         "alt" => "STI Lipa event",
-        "url" => "blog/sti-lipa.html",
+        "url" => "../blog/sti-lipa.php",
         "mapInfo" => [
             "title" => "Tech & Training at STI Lipa",
             "summary" => "A look into STI Lipa’s modern curriculum.",
@@ -65,9 +65,9 @@ $events = [
         "id" => "event6",
         "title" => "MAUPAY NGA ADLAW LEYTE",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/tacloban.png",
+        "image" => "../blog/img/tacloban.png",
         "alt" => "Leyte event",
-        "url" => "blog/tacloban.html",
+        "url" => "../blog/tacloban.php",
         "mapInfo" => [
             "title" => "Learning English in Tacloban",
             "summary" => "ELA helps students master the language.",
@@ -78,9 +78,9 @@ $events = [
         "id" => "event7",
         "title" => "DLSL LIPA & RAIS: FOSTERING FUTURE LEADERS",
         "author" => "Published on: March 27, 2025",
-        "image" => "blog/img/dlsl.jpg",
+        "image" => "../blog/img/dlsl.jpg",
         "alt" => "DLSL Lipa event",
-        "url" => "blog/la-salle.html",
+        "url" => "../blog/php",
         "mapInfo" => null // Already covered by event2's map point
     ]
 ];
@@ -323,7 +323,7 @@ foreach ($events as $event) {
 <body>
   <header>
     <a href="../index.php" class="logo-link">
-      <img src="img/logo.png" alt="RAIS Events Logo" class="logo-image">
+      <img src="../img/logo.png" alt="RAIS Events Logo" class="logo-image">
     </a>
     <div class="menu-toggle" id="mobile-menu">
       <div class="bar"></div>

@@ -81,7 +81,7 @@ echo <<<HTML
     }
 
     .logo img {
-      width: 90px;
+      width: 150px;
       transition: transform 0.3s ease;
     }
     
@@ -279,7 +279,7 @@ echo <<<HTML
   <header>
     <div class="overlay-box"></div>
     <div class="logo">
-      <a href="../index.html">
+      <a href="../index.php">
         <img src="../img/logo1.png" alt="Company Logo" />
       </a>
     </div>

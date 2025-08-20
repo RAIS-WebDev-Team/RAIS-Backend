@@ -165,11 +165,11 @@ $page_title = "Login - RAIS Create";
           <div class="login-form">
             <h4 class="fw-bold mb-3 fs-3">Login to your Account</h4>
             <p class="mb-4 fs-6">Welcome! Please enter your email address</p>
-
-            <input type="email" class="form-control mb-3" placeholder="Email" />
-            <input type="password" class="form-control mb-3" placeholder="Password" />
+<form method="post" action="signin.php">
+            <input type="email"  name="email" class="form-control mb-3" placeholder="Email" required />
+            <input type="password" name="password" class="form-control mb-3" placeholder="Password" required/>
             
-            <button class="btn w-100 fw-bold btn-login">Login</button>
+            <button class="btn w-100 fw-bold btn-login" type="submit" name="login">Login</button>
 
             <div class="d-flex justify-content-between mt-3 form-links">
               <a href="register.php" class="fs-6">Don't have an account?</a>
@@ -177,6 +177,7 @@ $page_title = "Login - RAIS Create";
             </div>
           </div>
         </div>
+        </form>
         <div class="col-md-6 text-center d-none d-md-block">
             <img src="img/logo.png" alt="RAIS Logo" class="img-fluid logo-img" />
         </div>
