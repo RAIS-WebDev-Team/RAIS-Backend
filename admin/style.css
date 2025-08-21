@@ -940,4 +940,56 @@ input:checked+.slider:before {
     .sidebar:hover {
         width: 100%;
     }
+    
+}
+
+/* === STYLES FOR CONTENT MANAGEMENT PAGE (FINAL V3) === */
+
+/* 1. Custom Floating Action Button (FAB) Colors */
+.fab-container .btn-info {
+    background-color: #808080 !important;
+    border-color: #808080 !important;
+}
+.fab-container .btn-warning {
+    background-color: #74D4FF !important;
+    border-color: #74D4FF !important;
+}
+.fab-container .btn-danger {
+    background-color: #FB2C36 !important;
+    border-color: #FB2C36 !important;
+}
+.fab-container .btn-primary {
+    background-color: #7B282C !important;
+    border-color: #7B282C !important;
+}
+
+/* 2. Custom Color & Hover for Mobile Navigation Dropdown Button */
+#contentNavDropdown.btn-outline-primary {
+    background-color: #7B282C !important;
+    border-color: #7B282C !important;
+    color: white !important;
+}
+#contentNavDropdown.btn-outline-primary:hover {
+    background-color: #6a2226 !important;
+    border-color: #6a2226 !important;
+    color: white !important;
+}
+
+/* 
+  THIS IS THE NEW FIX: 
+  Styles the items INSIDE the dropdown menu for both hover and active states.
+  It uses your theme's --rais-button-maroon variable.
+*/
+.content-nav .dropdown-menu .dropdown-item:hover,
+.content-nav .dropdown-menu .dropdown-item.active {
+    background-color: var(--rais-button-maroon) !important;
+    color: white !important;
+}
+
+/* 3. Adjust FAB position on mobile to avoid the bottom navbar */
+@media (max-width: 786px) {
+    .fab-container {
+        bottom: 70px !important; 
+        right: 20px !important;
+    }
 }

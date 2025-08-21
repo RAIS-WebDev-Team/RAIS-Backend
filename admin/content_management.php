@@ -28,6 +28,7 @@ $footerData = [
     ["id" => 3, "label" => "Location", "description" => "123 Immigration Ave, Suite 100, Capital City", "type" => "static"]
 ];
 ?>
+
 <!doctype html>
 <html lang="en">
 
@@ -35,7 +36,6 @@ $footerData = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?php echo htmlspecialchars($page_title); ?></title>
-    <!-- Dependencies -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="icon" href="../img/logoulit.png" />
@@ -53,7 +53,23 @@ $footerData = [
             <main class="main-content">
                 <h1>Content Management</h1>
                 <div class="content-card">
-                    <nav class="nav nav-pills flex-column flex-sm-row content-nav">
+                    <!-- Dropdown for mobile -->
+                    <div class="dropdown d-sm-none mb-3 content-nav">
+                        <button class="btn btn-outline-primary dropdown-toggle w-100" type="button" id="contentNavDropdown" data-bs-toggle="dropdown" aria-expanded="false">
+                            <!-- This will be populated by JavaScript -->
+                        </button>
+                        <ul class="dropdown-menu w-100" aria-labelledby="contentNavDropdown">
+                            <li><a class="dropdown-item nav-link active" href="#" data-target="landing-page">Landing Page</a></li>
+                            <li><a class="dropdown-item nav-link" href="#" data-target="about">About</a></li>
+                            <li><a class="dropdown-item nav-link" href="#" data-target="services">Services</a></li>
+                            <li><a class="dropdown-item nav-link" href="#" data-target="blogs">Blogs</a></li>
+                            <li><a class="dropdown-item nav-link" href="#" data-target="partners">Partners</a></li>
+                            <li><a class="dropdown-item nav-link" href="#" data-target="footer">Footer</a></li>
+                        </ul>
+                    </div>
+
+                    <!-- Nav pills for desktop -->
+                    <nav class="nav nav-pills flex-sm-row content-nav d-none d-sm-flex">
                         <a class="flex-sm-fill text-sm-center nav-link active" href="#" data-target="landing-page">Landing Page</a>
                         <a class="flex-sm-fill text-sm-center nav-link" href="#" data-target="about">About</a>
                         <a class="flex-sm-fill text-sm-center nav-link" href="#" data-target="services">Services</a>
@@ -61,6 +77,7 @@ $footerData = [
                         <a class="flex-sm-fill text-sm-center nav-link" href="#" data-target="partners">Partners</a>
                         <a class="flex-sm-fill text-sm-center nav-link" href="#" data-target="footer">Footer</a>
                     </nav>
+
                     <div id="content-sections">
                         <!-- Landing Page Section -->
                         <div id="landing-page" class="content-section active">
@@ -189,35 +206,27 @@ $footerData = [
     </div>
 
     <!-- ALL MODALS AND TEMPLATES -->
-    <!-- Landing Page Modals -->
+    <!-- (All your existing modals and templates go here) -->
+    <!-- ... -->
     <div class="modal fade" id="uploadMediaModal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="uploadMediaModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="uploadMediaModalLabel">Add New Hero Media</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><form id="upload-form" novalidate><div class="mb-3"><label for="mediaName" class="form-label">Media Name</label><input type="text" class="form-control" id="mediaName" placeholder="e.g., Hero Section 2" required></div><div class="mb-3"><label for="uploaderName" class="form-label">Uploader</label><input type="text" class="form-control" id="uploaderName" placeholder="e.g., admin2" required></div><div class="mb-3"><label for="mediaFile" class="form-label">Upload Photo or Video</label><input class="form-control" type="file" id="mediaFile" accept="image/*,video/*"><div class="form-text" id="mediaFileHelp">Please select a landscape photo for best results.</div></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="save-media-btn">Save Media</button></div></div></div></div>
     <div class="modal fade" id="landscapeWarningModal" tabindex="-1" aria-labelledby="landscapeWarningModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="landscapeWarningModalLabel">Image Orientation Warning</h5> <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><p>The chosen photo is not a landscape photo. If you wish to continue, the photo may be stretched or cropped.</p></div><div class="modal-footer"> <button type="button" class="btn btn-secondary" id="repick-photo-btn">Repick Photo</button> <button type="button" class="btn btn-primary" id="continue-anyway-btn">Continue Anyway</button></div></div></div></div>
     <div class="modal fade" id="landing-confirmation-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Confirm Action</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="landing-confirmation-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="confirm-landing-action-btn">Confirm</button></div></div></div></div>
     <div class="modal fade" id="landing-preview-modal" tabindex="-1"><div class="modal-dialog modal-lg modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="landing-preview-title">Media Preview</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="landing-preview-body" class="text-center"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div>
-    
-    <!-- About Page Modals -->
     <div class="modal fade" id="aboutConfirmationModal" tabindex="-1" aria-labelledby="aboutConfirmationModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="aboutConfirmationModalLabel">Confirm Update</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">Are you sure you want to update the 'About Us' media and text? This action cannot be undone.</div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="confirm-about-update-btn">Confirm Update</button></div></div></div></div>
     <div class="modal fade" id="updateSuccessModal" tabindex="-1" aria-labelledby="updateSuccessModalLabel" aria-hidden="true"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="updateSuccessModalLabel">Success!</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body">The 'About Us' section has been updated successfully.</div><div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button></div></div></div></div>
-    
-    <!-- Services Modals & Template -->
     <div class="modal fade" id="service-modal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="serviceModalLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="service-modal-title">Add New Service</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><form id="service-form" novalidate><h6>Service Information</h6><div class="mb-3"><label for="service-name" class="form-label">Service Name</label><input type="text" class="form-control" id="service-name" required></div><div class="mb-3"><label for="service-description" class="form-label">Description</label><textarea class="form-control" id="service-description" rows="3" required></textarea></div><div class="mb-3"><label for="service-hero-media" class="form-label">Hero Section Media</label><input type="file" class="form-control" id="service-hero-media" accept="image/*,video/*"></div><hr class="my-4"><h6>Service Sections</h6><p class="text-muted small">Add detailed sections for this service. The layout will alternate automatically.</p><div id="dynamic-sections-container"></div><button type="button" id="add-section-btn" class="btn btn-outline-primary mt-2"><i class="bi bi-plus-circle me-2"></i>Add Section</button></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="save-service-btn">Add Service</button></div></div></div></div>
     <template id="service-section-template"><div class="p-3 border rounded mb-3 dynamic-section"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="section-number mb-0">Section 1</h6><button type="button" class="btn-close remove-section-btn" aria-label="Remove Section"></button></div><div class="mb-2"><label class="form-label">Section Title</label><input type="text" class="form-control section-title" required></div><div class="mb-2"><label class="form-label">Section Description</label><textarea class="form-control section-description" rows="3" required></textarea></div><div><label class="form-label">Section Media</label><input type="file" class="form-control section-media" accept="image/*,video/*"></div></div></template>
     <div class="modal fade" id="service-confirmation-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Confirm Action</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="service-confirmation-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="confirm-service-action-btn">Confirm</button></div></div></div></div>
     <div class="modal fade" id="service-preview-modal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="service-preview-title">Service Preview</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="service-preview-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div>
-    
-    <!-- Blogs Modals & Template -->
     <div class="modal fade" id="blog-modal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="blogModalLabel" aria-hidden="true"><div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="blog-modal-title">Add New Blog Post</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><form id="blog-form" novalidate><h6>Blog Information</h6><div class="mb-3"><label for="blog-title" class="form-label">Blog Title</label><input type="text" class="form-control" id="blog-title" required></div><div class="mb-3"><label for="blog-summary" class="form-label">Summary / Subtitle</label><textarea class="form-control" id="blog-summary" rows="3" required></textarea></div><div class="mb-3"><label for="blog-hero-media" class="form-label">Hero Section Media (Main Image)</label><input type="file" class="form-control" id="blog-hero-media" accept="image/*,video/*"></div><hr class="my-4"><h6>Blog Sections</h6><p class="text-muted small">Add detailed sections for this blog post. The layout will alternate automatically.</p><div id="blog-dynamic-sections-container"></div><button type="button" id="add-blog-section-btn" class="btn btn-outline-primary mt-2"><i class="bi bi-plus-circle me-2"></i>Add Section</button></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="save-blog-btn">Add Blog Post</button></div></div></div></div>
     <template id="blog-section-template"><div class="p-3 border rounded mb-3 dynamic-section"><div class="d-flex justify-content-between align-items-center mb-2"><h6 class="section-number mb-0">Section 1</h6><button type="button" class="btn-close remove-section-btn" aria-label="Remove Section"></button></div><div class="mb-2"><label class="form-label">Section Title (Optional)</label><input type="text" class="form-control section-title"></div><div class="mb-2"><label class="form-label">Section Content / Paragraph</label><textarea class="form-control section-description" rows="5" required></textarea></div><div><label class="form-label">Section Media (Optional)</label><input type="file" class="form-control section-media" accept="image/*,video/*"></div></div></template>
     <div class="modal fade" id="blog-confirmation-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Confirm Action</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="blog-confirmation-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="confirm-blog-action-btn">Confirm</button></div></div></div></div>
     <div class="modal fade" id="blog-preview-modal" tabindex="-1"><div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="blog-preview-title">Blog Preview</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="blog-preview-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button></div></div></div></div>
-    
-    <!-- Partners Modals -->
     <div class="modal fade" id="partner-modal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="partnerModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="partner-modal-title">Add New Partner</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><form id="partner-form" novalidate><div class="mb-3"><label for="partner-name" class="form-label">Partner Name</label><input type="text" class="form-control" id="partner-name" required></div><div class="mb-3"><label for="partner-link" class="form-label">Website Link</label><input type="url" class="form-control" id="partner-link" placeholder="https://example.com" required></div><div class="mb-3"><label for="partner-logo" class="form-label">Partner Logo</label><input class="form-control" type="file" id="partner-logo" accept="image/*"><div class="form-text" id="partner-logo-help">Upload a logo for the partner.</div></div><div class="text-center"><img src="https://via.placeholder.com/100x100.png?text=Logo" alt="Logo Preview" id="partner-logo-preview" class="mt-2 bg-light p-1"></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="save-partner-btn">Add Partner</button></div></div></div></div>
     <div class="modal fade" id="partner-confirmation-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Confirm Deletion</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="partner-confirmation-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="confirm-partner-delete-btn">Confirm</button></div></div></div></div>
-    
-    <!-- Footer Modals -->
     <div class="modal fade" id="footer-modal" tabindex="-1" data-bs-backdrop="static" aria-labelledby="footerModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><h5 class="modal-title" id="footer-modal-title">Add Social Media Link</h5><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button></div><div class="modal-body"><form id="footer-form" novalidate><div class="mb-3"><label for="footer-label" class="form-label">Label</label><input type="text" class="form-control" id="footer-label" placeholder="e.g., Facebook" required></div><div class="mb-3"><label for="footer-description" class="form-label">Description / Link</label><input type="text" class="form-control" id="footer-description" placeholder="e.g., https://facebook.com/your-page" required></div></form></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="save-footer-item-btn">Save Item</button></div></div></div></div>
     <div class="modal fade" id="footer-confirmation-modal" tabindex="-1"><div class="modal-dialog modal-dialog-centered"><div class="modal-content"><div class="modal-header"><h5 class="modal-title">Confirm Deletion</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div><div class="modal-body" id="footer-confirmation-body"></div><div class="modal-footer"><button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button><button type="button" class="btn btn-primary" id="confirm-footer-delete-btn">Confirm</button></div></div></div></div>
+
 
     <!-- SCRIPTS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
@@ -235,28 +244,53 @@ $footerData = [
             // --- MAIN NAVIGATION LOGIC ---
             const navLinks = document.querySelectorAll('.content-nav .nav-link');
             const contentSections = document.querySelectorAll('.content-section');
+            const dropdownButton = document.getElementById('contentNavDropdown');
+
+            function setActiveNav(targetId) {
+                const activeLink = document.querySelector(`.content-nav .nav-link[data-target="${targetId}"]`);
+                if (!activeLink) return;
+
+                // Update button text for dropdown
+                if (dropdownButton) {
+                    dropdownButton.textContent = activeLink.textContent;
+                }
+
+                // Update active classes for all links (in both navs)
+                navLinks.forEach(link => {
+                    link.classList.toggle('active', link.getAttribute('data-target') === targetId);
+                });
+
+                // Update visible content section
+                contentSections.forEach(section => {
+                    section.classList.toggle('active', section.id === targetId);
+                });
+            }
+
+            // Add click listeners to all nav links
             navLinks.forEach(link => {
                 link.addEventListener('click', function(e) {
                     e.preventDefault();
-                    navLinks.forEach(nav => nav.classList.remove('active'));
-                    this.classList.add('active');
                     const targetId = this.getAttribute('data-target');
-                    contentSections.forEach(section => {
-                        section.classList.toggle('active', section.id === targetId);
-                    });
+                    setActiveNav(targetId);
                 });
             });
 
             // --- DEEP LINKING LOGIC ---
             (function handleDeepLink() {
                 const hash = window.location.hash;
-                if (!hash) return;
-                const targetId = hash.substring(1);
-                const targetNavLink = document.querySelector(`.nav-link[data-target="${targetId}"]`);
-                if (targetNavLink) {
-                    targetNavLink.click();
+                const targetId = hash ? hash.substring(1) : null;
+                // Find the initially active link from the HTML (first one)
+                const initialActiveLink = document.querySelector('.content-nav .nav-link.active');
+
+                if (targetId) {
+                    // If there's a hash in the URL, prioritize it
+                    setActiveNav(targetId);
+                } else if (initialActiveLink) {
+                    // Otherwise, set the initial state based on the default active link
+                    setActiveNav(initialActiveLink.getAttribute('data-target'));
                 }
             })();
+
 
             // --- START: SCRIPT FOR LANDING PAGE MANAGEMENT ---
             (function() {

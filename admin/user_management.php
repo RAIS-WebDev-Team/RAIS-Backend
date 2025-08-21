@@ -6,11 +6,11 @@ $active_page = "user_management"; // A variable to help set the 'active' class i
 // In a real application, you would fetch this data from your database.
 $users = [
     ['id' => 1, 'firstName' => 'John', 'lastName' => 'Doe', 'email' => 'john.doe@example.com', 'status' => 'Active'],
-    ['id' => 2, 'firstName' => 'Jane', 'lastName' => 'Smith', 'email' => 'jane.smith@example.com', 'status' => 'Pending Docs'],
-    ['id' => 3, 'firstName' => 'Peter', 'lastName' => 'Jones', 'email' => 'peter.j@example.com', 'status' => 'Approved'],
+    ['id' => 2, 'firstName' => 'Jane', 'lastName' => 'Smith', 'email' => 'jane.smith@example.com', 'status' => 'Inactive'],
+    ['id' => 3, 'firstName' => 'Peter', 'lastName' => 'Jones', 'email' => 'peter.j@example.com', 'status' => 'Active'],
     ['id' => 4, 'firstName' => 'Alice', 'lastName' => 'Brown', 'email' => 'alice.b@example.com', 'status' => 'Inactive'],
     ['id' => 5, 'firstName' => 'Michael', 'lastName' => 'Clark', 'email' => 'm.clark@example.com', 'status' => 'Active'],
-    ['id' => 6, 'firstName' => 'Sarah', 'lastName' => 'Davis', 'email' => 's.davis@example.com', 'status' => 'Approved'],
+    ['id' => 6, 'firstName' => 'Sarah', 'lastName' => 'Davis', 'email' => 's.davis@example.com', 'status' => 'Active'],
 ];
 
 ?>
@@ -125,7 +125,7 @@ $users = [
                         <div class="mb-3"><label for="addFirstName" class="form-label">First Name</label><input type="text" class="form-control" id="addFirstName" required></div>
                         <div class="mb-3"><label for="addLastName" class="form-label">Last Name</label><input type="text" class="form-control" id="addLastName" required></div>
                         <div class="mb-3"><label for="addEmail" class="form-label">Email address</label><input type="email" class="form-control" id="addEmail" required></div>
-                        <div class="mb-3"><label for="addStatus" class="form-label">Status</label><select class="form-select" id="addStatus"><option>Active</option><option>Pending Docs</option><option>Approved</option><option>Inactive</option></select></div>
+                        <div class="mb-3"><label for="addStatus" class="form-label">Status</label><select class="form-select" id="addStatus"><option>Active</option><option>Inactive</option></select></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -150,7 +150,7 @@ $users = [
                         <div class="mb-3"><label for="editFirstName" class="form-label">First Name</label><input type="text" class="form-control" id="editFirstName" required></div>
                         <div class="mb-3"><label for="editLastName" class="form-label">Last Name</label><input type="text" class="form-control" id="editLastName" required></div>
                         <div class="mb-3"><label for="editEmail" class="form-label">Email address</label><input type="email" class="form-control" id="editEmail" required></div>
-                        <div class="mb-3"><label for="editStatus" class="form-label">Status</label><select class="form-select" id="editStatus"><option>Active</option><option>Pending Docs</option><option>Approved</option><option>Inactive</option></select></div>
+                        <div class="mb-3"><label for="editStatus" class="form-label">Status</label><select class="form-select" id="editStatus"><option>Active</option><option>Inactive</option></select></div>
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -180,6 +180,24 @@ $users = [
         </div>
     </div>
 
+    <!-- CHANGE 1: ADDED CONFIRMATION MODAL -->
+    <div class="modal fade" id="confirmationModal" tabindex="-1" aria-labelledby="confirmationModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmationModalLabel">Success</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    User details have been updated successfully.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
@@ -190,9 +208,12 @@ $users = [
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             const userTableBody = document.getElementById('userTableBody');
+            
+            // --- CHANGE 2: CREATE JAVASCRIPT INSTANCE OF THE NEW MODAL ---
+            const confirmationModal = new bootstrap.Modal(document.getElementById('confirmationModal'));
+
 
             // --- Helper Functions ---
-            // In a real app, the new user ID would come from the database.
             function getNextUserId() {
                 const userRows = userTableBody.querySelectorAll('tr');
                 let maxId = 0;
@@ -203,7 +224,6 @@ $users = [
                 return maxId + 1;
             }
 
-            // Simple HTML escaping to prevent XSS from user input
             function escapeHTML(str) {
                 const p = document.createElement("p");
                 p.textContent = str;
@@ -265,16 +285,14 @@ $users = [
             addUserForm.addEventListener('submit', function(event) {
                 event.preventDefault();
 
-                // 1. Get form data
                 const firstName = document.getElementById('addFirstName').value;
                 const lastName = document.getElementById('addLastName').value;
                 const email = document.getElementById('addEmail').value;
                 const status = document.getElementById('addStatus').value;
 
-                // 2. Create the new table row
                 const newUserId = getNextUserId();
                 const userName = escapeHTML(firstName) + ' ' + escapeHTML(lastName);
-                let statusClass = (status === 'Active' || status === 'Approved') ? 'bg-success' : (status === 'Inactive' ? 'bg-secondary' : 'bg-warning text-dark');
+                let statusClass = (status === 'Active') ? 'bg-success' : 'bg-secondary';
                 
                 const newRow = document.createElement('tr');
                 newRow.id = 'user-row-' + newUserId;
@@ -292,20 +310,47 @@ $users = [
                     </td>
                 `;
 
-                // 3. Append the new row and clean up
                 userTableBody.appendChild(newRow);
                 addUserForm.reset();
                 bootstrap.Modal.getInstance(document.getElementById('addUserModal')).hide();
             });
 
-            // Handle EDIT USER submission
+            // --- CHANGE 3: UPDATED EDIT USER SUBMISSION LOGIC ---
             const editUserForm = document.getElementById('editUserForm');
             editUserForm.addEventListener('submit', function(event) {
                 event.preventDefault();
-                // In a real application, you would send this data to the server via AJAX.
+
+                // Get new data from the form
                 const userId = document.getElementById('editUserId').value;
-                alert('Edit user form submitted for user ID: ' + userId + ' (This is a demo)');
+                const newFirstName = document.getElementById('editFirstName').value;
+                const newLastName = document.getElementById('editLastName').value;
+                const newEmail = document.getElementById('editEmail').value;
+                const newStatus = document.getElementById('editStatus').value;
+
+                // Find the user's row in the table
+                const userRow = document.getElementById('user-row-' + userId);
+                if (userRow) {
+                    // Update the table cells
+                    userRow.cells[1].textContent = newFirstName;
+                    userRow.cells[2].textContent = newLastName;
+                    userRow.cells[3].textContent = newEmail;
+                    
+                    // Update the status badge text and color
+                    const badge = userRow.cells[4].querySelector('.badge');
+                    badge.textContent = newStatus;
+                    badge.className = newStatus === 'Active' ? 'badge bg-success' : 'badge bg-secondary';
+                    
+                    // Update the data attributes on the edit button
+                    const editButton = userRow.querySelector('.edit-btn');
+                    editButton.setAttribute('data-first-name', newFirstName);
+                    editButton.setAttribute('data-last-name', newLastName);
+                    editButton.setAttribute('data-email', newEmail);
+                    editButton.setAttribute('data-status', newStatus);
+                }
+
+                // Hide the edit modal and show the confirmation modal
                 bootstrap.Modal.getInstance(editUserModal).hide();
+                confirmationModal.show();
             });
         });
     </script>

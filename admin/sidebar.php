@@ -1,6 +1,40 @@
+<style>
+.sidebar {
+  height: 100vh;             
+  display: flex;
+  flex-direction: column;
+}
+
+.sidebar .logo {
+  flex-shrink: 0;
+}
+
+.sidebar .footer-text {
+  flex-shrink: 0;
+  margin-top: auto;           
+}
+
+.sidebar .nav {
+  flex: 1 1 auto;             
+  min-height: 0;              
+  overflow-y: auto;        
+  -webkit-overflow-scrolling: touch;
+
+  scrollbar-width: none; 
+}
+.sidebar .nav::-webkit-scrollbar {
+  display: none;
+}
+
+.sidebar .nav-link{
+    width:100%;
+    height:auto;
+}
+</style>
+
 <aside class="sidebar d-flex flex-column">
     <div class="logo">RAIS</div>
-    <nav class="nav flex-column">
+    <nav class="nav">
         <a class="nav-link <?php echo ($active_page === 'dashboard') ? 'active' : ''; ?>" href="admin.php">
             <i class="bi bi-window-sidebar"></i><span>Dashboard</span>
         </a>
