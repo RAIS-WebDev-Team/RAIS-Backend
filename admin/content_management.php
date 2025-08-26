@@ -9,13 +9,7 @@ $landingMediaData = [
     ["id" => 1, "name" => "Hero Section 1", "uploader" => "admin1", "date" => "2024-10-26", "fileName" => "homepage-video.mp4", "mediaUrl" => "path/to/video.mp4", "file" => null]
 ];
 
-$aboutData = [
-    "title" => "Our Company Mission",
-    "description" => "A brief look into our goals and values.",
-    "date" => "2024-10-26",
-    "mediaUrl" => "https://via.placeholder.com/800x450.png?text=Default+About+Image",
-    "mediaType" => "image"
-];
+$aboutData = null;
 
 // We start with empty arrays for sections that are managed dynamically.
 $servicesData = [];
@@ -113,30 +107,17 @@ $footerData = [
                                     <div class="card">
                                         <div class="card-body">
                                             <h4 class="card-title">Current Media</h4>
-                                            <div id="media-preview-container" class="mb-3 border rounded" style="min-height: 200px; background-color: #f0f0f0;">
-                                                <img src="https://via.placeholder.com/800x450.png?text=Default+About+Image" class="img-fluid" alt="About Us Media">
+                                            <!-- The content below will be populated by JavaScript -->
+                                            <div id="media-preview-container" class="mb-3 border rounded d-flex align-items-center justify-content-center" style="min-height: 200px; background-color: #f0f0f0;">
+                                                <!-- Initially empty or shows a placeholder -->
                                             </div>
-                                            <h3 id="display-title" class="card-title">Our Company Mission</h3>
-                                            <h6 id="display-description" class="card-subtitle mb-2 text-muted">A brief look into our goals and values.</h6>
-                                            <p class="card-text"><small id="display-date" class="text-muted">Last updated: 2024-10-26</small></p>
+                                            <h3 id="display-title" class="card-title"></h3>
+                                            <h6 id="display-description" class="card-subtitle mb-2 text-muted"></h6>
+                                            <p class="card-text"><small id="display-date" class="text-muted"></small></p>
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-lg-6">
-                                    <div class="card">
-                                        <div class="card-body">
-                                            <h3>Update Media</h3>
-                                            <form id="about-form" novalidate>
-                                                <div class="mb-3"><label for="input-title" class="form-label">Media Title</label><input type="text" class="form-control" id="input-title" required><div class="invalid-feedback">Please provide a media title.</div></div>
-                                                <div class="mb-3"><label for="input-description" class="form-label">Media Description</label><textarea class="form-control" id="input-description" rows="4" required></textarea><div class="invalid-feedback">Please provide a media description.</div></div>
-                                                <div class="mb-3"><label for="input-file" class="form-label">Media File</label><div class="input-group"><input type="file" class="form-control" id="input-file" accept="image/*,video/*" hidden><label class="btn btn-outline-secondary" for="input-file" id="file-label">Choose File</label><span class="form-control" id="file-name-display" readonly>No file chosen...</span></div></div>
-                                                <div class="d-flex justify-content-end gap-2"><button type="button" class="btn btn-secondary" id="cancel-about-btn">Cancel</button><button type="submit" class="btn btn-primary" id="update-about-btn">Update Media</button></div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
+                                <!-- ... form on the right ... -->
 
                         <!-- Services Section -->
                         <div id="services" class="content-section">
@@ -424,7 +405,7 @@ $footerData = [
                 updateFabState();
             })();
 
-            // --- START: SCRIPT FOR ABOUT PAGE MANAGEMENT ---
+                                   // --- START: SCRIPT FOR ABOUT PAGE MANAGEMENT ---
             (function() {
                 const confirmationModal = new bootstrap.Modal(document.getElementById('aboutConfirmationModal'));
                 const successModal = new bootstrap.Modal(document.getElementById('updateSuccessModal'));
@@ -441,59 +422,123 @@ $footerData = [
                 const cancelBtn = document.getElementById('cancel-about-btn');
                 const confirmUpdateBtn = document.getElementById('confirm-about-update-btn');
 
-                let currentState = {
-                    title: initialAboutData.title,
-                    description: initialAboutData.description,
-                    date: `Last updated: ${initialAboutData.date}`,
-                    mediaHtml: `<img src="${initialAboutData.mediaUrl}" class="img-fluid" alt="About Us Media">`,
-                    fileName: 'No file chosen...'
-                };
+                // Function to load data from localStorage (simulating a database)
+                function loadAboutData() {
+                    const savedData = localStorage.getItem('raisCmsAboutData');
+                    if (savedData) {
+                        return JSON.parse(savedData);
+                    }
+                    // This is the default state for the very first time the page is visited
+                    return {
+                        title: "Our Company Mission",
+                        description: "A brief look into our goals and values.",
+                        date: "2024-10-26",
+                        mediaDataUrl: "https://via.placeholder.com/800x450.png?text=Default+About+Image",
+                        fileName: "No file chosen..."
+                    };
+                }
 
-                function resetToCurrentState() {
-                    displayTitle.textContent = currentState.title;
-                    displayDescription.textContent = currentState.description;
-                    displayDate.textContent = currentState.date;
-                    mediaPreviewContainer.innerHTML = currentState.mediaHtml;
-                    inputTitle.value = currentState.title;
-                    inputDescription.value = currentState.description;
-                    fileNameDisplay.textContent = currentState.fileName;
-                    fileLabel.textContent = currentState.fileName === 'No file chosen...' ? 'Choose File' : 'Change File';
+                // Function to save data to localStorage
+                function saveAboutData(data) {
+                    localStorage.setItem('raisCmsAboutData', JSON.stringify(data));
+                }
+
+                let currentState = loadAboutData();
+                let newMediaDataUrl = null; // A temporary holder for a newly uploaded file
+
+                // This function now correctly renders the state, including media from a data URL
+                function renderState(state) {
+                    displayTitle.textContent = state.title;
+                    displayDescription.textContent = state.description;
+                    displayDate.textContent = state.date ? `Last updated: ${state.date}` : "";
+
+                    // Render media from the saved data URL
+                    if (state.mediaDataUrl) {
+                        const isVideo = state.fileName.match(/\.(mp4|webm|ogg)$/i);
+                        if (isVideo) {
+                            // --- CHANGE 1: Added the 'controls' attribute here ---
+                            mediaPreviewContainer.innerHTML = `<video src="${state.mediaDataUrl}" class="img-fluid" controls autoplay muted loop playsinline></video>`;
+                        } else {
+                            mediaPreviewContainer.innerHTML = `<img src="${state.mediaDataUrl}" class="img-fluid" alt="About Us Media">`;
+                        }
+                    } else {
+                        mediaPreviewContainer.innerHTML = '<p class="text-muted m-0">No Media Set</p>';
+                    }
+
+                    // Populate the form fields
+                    inputTitle.value = state.title;
+                    inputDescription.value = state.description;
+                    fileNameDisplay.textContent = state.fileName;
+                    fileLabel.textContent = state.fileName === 'No file chosen...' ? 'Choose File' : 'Change File';
                     inputFile.value = '';
                     aboutForm.classList.remove('was-validated');
                 }
-                
-                resetToCurrentState();
 
+                // Real-time updates for a better user experience
+                inputTitle.addEventListener('input', function() { displayTitle.textContent = this.value; });
+                inputDescription.addEventListener('input', function() { displayDescription.textContent = this.value; });
+
+                // Handle file selection and read the file as a Data URL for previewing and saving
                 inputFile.addEventListener('change', function() {
                     const file = this.files[0];
                     if (file) {
-                        const fileURL = URL.createObjectURL(file);
-                        let mediaElement;
-                        if (file.type.startsWith('image/')) { mediaElement = `<img src="${fileURL}" class="img-fluid" alt="New media preview">`; } 
-                        else if (file.type.startsWith('video/')) { mediaElement = `<video src="${fileURL}" class="img-fluid" autoplay muted loop playsinline></video>`; }
-                        if (mediaElement) {
-                            mediaPreviewContainer.innerHTML = mediaElement;
-                            fileNameDisplay.textContent = file.name;
-                            fileLabel.textContent = 'Change File';
-                        }
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            newMediaDataUrl = e.target.result; // Store the new media's data URL
+                            let mediaElement;
+                            if (file.type.startsWith('image/')) {
+                                mediaElement = `<img src="${newMediaDataUrl}" class="img-fluid" alt="New media preview">`;
+                            } else if (file.type.startsWith('video/')) {
+                                // --- CHANGE 2: Added the 'controls' attribute here ---
+                                mediaElement = `<video src="${newMediaDataUrl}" class="img-fluid" controls autoplay muted loop playsinline></video>`;
+                            }
+                            if (mediaElement) {
+                                mediaPreviewContainer.innerHTML = mediaElement;
+                                fileNameDisplay.textContent = file.name;
+                                fileLabel.textContent = 'Change File';
+                            }
+                        };
+                        reader.readAsDataURL(file);
                     }
                 });
-                cancelBtn.addEventListener('click', resetToCurrentState);
+
+                // The cancel button reloads the last saved state
+                cancelBtn.addEventListener('click', () => renderState(currentState));
+
                 aboutForm.addEventListener('submit', function(event) {
-                    event.preventDefault(); event.stopPropagation();
-                    if (!this.checkValidity()) { this.classList.add('was-validated'); return; }
+                    event.preventDefault();
+                    event.stopPropagation();
+                    if (!this.checkValidity()) {
+                        this.classList.add('was-validated');
+                        return;
+                    }
                     confirmationModal.show();
                 });
+
+                // This is the core save logic
                 confirmUpdateBtn.addEventListener('click', function() {
                     confirmationModal.hide();
+
+                    // Update the currentState object with the new values from the form
                     currentState.title = inputTitle.value;
                     currentState.description = inputDescription.value;
-                    currentState.date = `Last updated: ${new Date().toISOString().slice(0, 10)}`;
-                    currentState.mediaHtml = mediaPreviewContainer.innerHTML;
+                    currentState.date = new Date().toISOString().slice(0, 10);
                     currentState.fileName = fileNameDisplay.textContent;
-                    resetToCurrentState();
+                    
+                    // If a new file was uploaded, update the media data URL
+                    if (newMediaDataUrl) {
+                        currentState.mediaDataUrl = newMediaDataUrl;
+                    }
+
+                    saveAboutData(currentState); // Persist the changes
+                    newMediaDataUrl = null; // Clear the temporary new media data
+
+                    renderState(currentState); // Re-render the UI with the saved state
                     successModal.show();
                 });
+
+                // Initial load when the page is ready
+                renderState(currentState);
             })();
             
             // --- START: SCRIPT FOR SERVICES PAGE MANAGEMENT ---
