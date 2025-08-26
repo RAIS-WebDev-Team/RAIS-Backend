@@ -1,18 +1,60 @@
 <?php
-// --- MOCK USER DATA ---
-// In a real application, this data would come from a database after a user logs in.
-// We are using an associative array here to simulate that data.
+// dashboard.php - The user's personalized dashboard page
+
+// Start the session to access logged-in user's data.
+session_start();
+
+// Include the database configuration file.
+include_once '../config.php';
+
+// Check if the user is logged in. If not, redirect them to the login page.
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("location: ../login.php");
+    exit;
+}
+
+// Get the logged-in user's ID from the session.
+$userId = $_SESSION['id'];
+
+// --- FETCH USER DATA & SETTINGS FROM DATABASE ---
+// Prepare a statement to select all necessary data for the user, including dark mode setting.
+$stmt = $conn->prepare("SELECT firstName, lastName, phone, birthday, profileImage, facebook, instagram, gmail, dark_mode FROM users WHERE id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Fetch the user's data into an associative array.
+$dbUserData = $result->fetch_assoc();
+
+$stmt->close();
+$conn->close();
+
+// If no user data is found (which shouldn't happen if they are logged in),
+// use default values to avoid errors.
+if (!$dbUserData) {
+    $dbUserProfile = [
+        'firstName' => 'User',
+        'lastName' => 'Not Found',
+        'phone' => '', 'birthday' => '', 'profileImage' => null,
+        'facebook' => '', 'instagram' => '', 'gmail' => ''
+    ];
+    $darkModeEnabled = false;
+} else {
+    $dbUserProfile = $dbUserData;
+    $darkModeEnabled = (bool)$dbUserData['dark_mode'];
+}
+
+// Structure the fetched data into the format expected by the HTML/JavaScript.
 $userProfile = [
-    'firstName' => 'Firstname',
-    'lastName' => 'Lastname',
-    'contact' => '(+63) 917 123 4567',
-    'birthday' => '01/15/1990',
-    // By default, no profile image is set, so the placeholder logo will be shown.
-    'profileImage' => null, 
+    'firstName' => $dbUserProfile['firstName'],
+    'lastName' => $dbUserProfile['lastName'],
+    'contact' => $dbUserProfile['phone'], // Map 'phone' from DB to 'contact'
+    'birthday' => $dbUserProfile['birthday'],
+    'profileImage' => $dbUserProfile['profileImage'] ? '../' . $dbUserProfile['profileImage'] : null, // Prepend path for image
     'social' => [
-        'facebook' => 'https://facebook.com/juandelacruz',
-        'instagram' => 'https://instagram.com/juandelacruz',
-        'gmail' => 'juan.delacruz@example.com'
+        'facebook' => $dbUserProfile['facebook'],
+        'instagram' => $dbUserProfile['instagram'],
+        'gmail' => $dbUserProfile['gmail']
     ]
 ];
 ?>
@@ -23,9 +65,7 @@ $userProfile = [
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAIS Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
-    <!-- Using a placeholder for the favicon -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="../img/logoulit.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -34,23 +74,19 @@ $userProfile = [
     <style>
         :root {
             --rais-primary-green: #004d40;
-            /* Dark Navy Green for primary elements */
             --rais-dark-green: #00332c;
-            /* Even Darker Navy Green for hover states */
             --rais-text-dark: #333333;
             --rais-text-light: #525252;
             --rais-card-bg: #FFFFFF;
             --rais-light-gray: #E8E8E8;
             --rais-progress-bg: #D9D9D9;
             --rais-progress-active: var(--rais-primary-green);
-            /* Use primary green for progress */
             --rais-bg-light: #F7F7F7;
             --rais-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             --rais-button-maroon: #811F1D;
-            /* Maroon for buttons, badges, floating elements */
             --rais-highlight-light-green: #98FB98;
-            /* Light Green for tour highlights */
         }
+
         /* Custom Scrollbar */
         ::-webkit-scrollbar {
             width: 12px;
@@ -74,7 +110,6 @@ $userProfile = [
             background-color: var(--rais-light-gray);
             color: var(--rais-text-dark);
             overflow: hidden;
-            /* Prevent body scroll */
         }
 
         .main-wrapper {
@@ -131,7 +166,7 @@ $userProfile = [
             align-items: center;
             gap: 15px;
             white-space: nowrap;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
         }
 
         .sidebar .nav-link.active,
@@ -166,7 +201,7 @@ $userProfile = [
             align-items: center;
             gap: 15px;
             white-space: nowrap;
-            transition: background-color 0.3s ease;
+            transition: background-color: 0.3s ease;
             margin-top: auto;
         }
 
@@ -266,12 +301,12 @@ $userProfile = [
         }
 
         .power-btn i {
-            color: #dc3545; /* Bootstrap danger red */
+            color: #dc3545;
             transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
         }
 
         .power-btn:hover i {
-            color: #a71d2a; /* Darker red on hover */
+            color: #a71d2a;
             transform: scale(1.1);
         }
 
@@ -329,7 +364,7 @@ $userProfile = [
             padding: 30px;
             border-radius: 12px;
             box-shadow: var(--rais-shadow);
-            position: relative; /* For tour highlight */
+            position: relative;
         }
 
         .user-info-card .card-content {
@@ -422,7 +457,7 @@ $userProfile = [
             cursor: grab;
         }
 
-        /* --- Progress Bar Styles --- */
+        /* Progress Bar Styles */
         .progress-steps {
             position: relative;
             background-color: var(--rais-card-bg);
@@ -466,11 +501,10 @@ $userProfile = [
             color: var(--rais-text-light);
             white-space: nowrap;
         }
-        /* --- END Progress Bar --- */
 
         /* Contents Grid */
         .contents-grid {
-            position: relative; /* For tour highlight */
+            position: relative;
         }
         .contents-grid .card {
             border: none;
@@ -534,7 +568,7 @@ $userProfile = [
             background-color: var(--rais-dark-green);
         }
 
-        /* Collapsible Chatbox for DESKTOP */
+        /* Chatbox Styles */
         .chat-container {
             position: fixed;
             bottom: 100px;
@@ -583,7 +617,6 @@ $userProfile = [
             border-top: 1px solid var(--rais-light-gray);
         }
 
-        /* Full-Screen Chat Styles for MOBILE */
         #full-screen-chat {
             position: fixed;
             top: 0;
@@ -653,7 +686,7 @@ $userProfile = [
             z-index: 1030;
         }
 
-        /* --- Tour Styles --- */
+        /* Tour Styles */
         .tour-overlay {
             position: fixed;
             top: 0;
@@ -799,7 +832,7 @@ $userProfile = [
 
         .tour-highlight {
             position: relative;
-            z-index: 1052; /* Above the overlay */
+            z-index: 1052;
             border: 3px solid var(--rais-highlight-light-green);
             border-radius: 15px;
             transition: all 0.3s ease-in-out;
@@ -809,10 +842,78 @@ $userProfile = [
             border-radius: 50%;
         }
 
-        /* Fix for floating buttons during tour */
         .floating-btn.tour-highlight,
         .chat-toggle-btn.tour-highlight {
             position: fixed !important;
+        }
+
+        /* Dark Mode Styles */
+        body.dark-mode {
+            background-color: #121212;
+            color: #EAEAEA;
+        }
+        .dark-mode .sidebar {
+            background-color: #1a1a1a;
+            border-right: 1px solid #2c2c2c;
+        }
+        .dark-mode .header,
+        .dark-mode .user-info-card,
+        .dark-mode .progress-steps,
+        .dark-mode .card,
+        .dark-mode .add-card,
+        .dark-mode .chat-container,
+        .dark-mode .modal-content,
+        .dark-mode #full-screen-chat,
+        .dark-mode .chat-footer-fullscreen {
+            background-color: #1e1e1e;
+            color: #EAEAEA;
+            border: 1px solid #2c2c2c;
+        }
+        .dark-mode .header {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .dark-mode .header-title,
+        .dark-mode .profile-name,
+        .dark-mode .card-title,
+        .dark-mode .step-circle,
+        .dark-mode .user-status .me-3,
+        .dark-mode .chat-title-fullscreen {
+            color: #EAEAEA !important;
+        }
+        .dark-mode .contact-info,
+        .dark-mode .step-label,
+        .dark-mode .card-text,
+        .dark-mode .text-muted {
+            color: #B0B0B0 !important;
+        }
+        .dark-mode .social-links a {
+            color: #EAEAEA;
+        }
+        .dark-mode .social-links a:hover i {
+            color: var(--rais-highlight-light-green);
+        }
+        .dark-mode .sidebar .nav-link.active,
+        .dark-mode .sidebar .nav-link:hover {
+            background-color: #00332c;
+        }
+        .dark-mode .step-circle {
+            background-color: #333;
+        }
+        .dark-mode .step-circle.active {
+            background-color: var(--rais-primary-green);
+        }
+        .dark-mode .tour-help-btn {
+            color: #EAEAEA;
+            border-color: var(--rais-highlight-light-green);
+        }
+        .dark-mode .tour-help-btn:hover {
+            background-color: #2c2c2c;
+        }
+        .dark-mode .quick-actions-card .logo-only-img {
+            filter: brightness(0.9);
+        }
+        .dark-mode ::-webkit-scrollbar-track {
+            background: #2c2c2c;
         }
 
         /* Responsive Design */
@@ -831,7 +932,7 @@ $userProfile = [
             .content-area {
                 height: auto;
                 overflow-y: visible;
-                margin-left: 0; /* Remove margin for mobile */
+                margin-left: 0;
             }
 
             .header {
@@ -851,7 +952,6 @@ $userProfile = [
                 padding-top: 15px;
             }
 
-            /* Transform sidebar into a bottom navigation bar */
             .sidebar {
                 width: 100%;
                 height: 50px;
@@ -970,7 +1070,7 @@ $userProfile = [
     </style>
 </head>
 
-<body>
+<body class="<?php echo $darkModeEnabled ? 'dark-mode' : ''; ?>">
     <div class="main-wrapper">
         <aside class="sidebar d-flex flex-column">
             <div class="logo">RAIS</div>
@@ -993,15 +1093,13 @@ $userProfile = [
         <div class="content-area">
             <div class="header">
                 <div class="header-brand d-flex align-items-center">
-                    <!-- Using a placeholder for the logo -->
                     <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img" onerror="this.onerror=null;this.src='https://placehold.co/150x50/FFFFFF/000000?text=RAIS+Logo';">
                     <span class="header-title">Roman & Associates Immigration Services</span>
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
-                    <!-- PHP dynamically inserts the current date -->
-                    <div class="me-3" style="font-weight: 500; color: var(--rais-text-light);"><?= date('F j, Y') ?></div>
+                    <div class="me-3" style="font-weight: 500;"><?= date('F j, Y') ?></div>
                     <button class="tour-help-btn" id="tourToggleButton"><i class="bi bi-question-circle"></i></button>
-                    <a href="../index.html" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
                     <span class="badge">ACTIVE</span>
                 </div>
             </div>
@@ -1029,7 +1127,6 @@ $userProfile = [
                     </div>
                     <div class="col-12 col-lg-5">
                         <div class="quick-actions-card h-100 d-flex flex-column justify-content-center">
-                             <!-- Using a placeholder for the interactive logo -->
                             <img src="../img/logoulit.png" alt="RAIS Logo" class="logo-only-img img-fluid" id="interactive-logo" onerror="this.onerror=null;this.src='https://placehold.co/200x200/FFFFFF/004d40?text=RAIS';">
                         </div>
                     </div>
@@ -1184,9 +1281,7 @@ $userProfile = [
     
     <div class="tour-overlay"></div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         // Pass initial data from PHP to JavaScript
@@ -1368,30 +1463,27 @@ $userProfile = [
         interactiveLogo.addEventListener('touchstart', handleDragStart);
         document.addEventListener('touchmove', handleDragMove);
         document.addEventListener('touchend', handleDragEnd);
-        // --- END OF INTERACTIVE LOGO JAVASCRIPT ---
         
         // --- PROFILE DATA LOGIC ---
         function loadProfileData() {
-            const profileData = JSON.parse(localStorage.getItem('userProfile')) || initialProfileData;
+            const profileData = initialProfileData;
 
-            // Populate dashboard view
             document.getElementById('dashboardProfileName').textContent = `${profileData.firstName || 'FIRST NAME'}, ${profileData.lastName || 'LAST NAME'}`;
             document.getElementById('dashboardContactNumber').textContent = profileData.contact || '(+63) 987 654 3210';
             document.getElementById('dashboardBirthday').textContent = `Birthday: ${profileData.birthday ? new Date(profileData.birthday).toLocaleDateString() : 'MM/DD/YYYY'}`;
 
             const socialLinksContainer = document.getElementById('dashboardSocialLinks');
-            socialLinksContainer.innerHTML = ''; // Clear existing links
-            if (profileData.facebook) {
-                socialLinksContainer.innerHTML += `<a href="${profileData.facebook}" target="_blank"><i class="bi bi-facebook fs-5"></i></a>`;
+            socialLinksContainer.innerHTML = '';
+            if (profileData.social.facebook) {
+                socialLinksContainer.innerHTML += `<a href="${profileData.social.facebook}" target="_blank" title="Facebook"><i class="bi bi-facebook fs-5"></i></a>`;
             }
-            if (profileData.instagram) {
-                socialLinksContainer.innerHTML += `<a href="${profileData.instagram}" target="_blank"><i class="bi bi-instagram fs-5"></i></a>`;
+            if (profileData.social.instagram) {
+                socialLinksContainer.innerHTML += `<a href="${profileData.social.instagram}" target="_blank" title="Instagram"><i class="bi bi-instagram fs-5"></i></a>`;
             }
-            if (profileData.gmail) {
-                socialLinksContainer.innerHTML += `<a href="mailto:${profileData.gmail}" target="_blank"><i class="bi bi-envelope fs-5"></i></a>`;
+            if (profileData.social.gmail) {
+                socialLinksContainer.innerHTML += `<a href="mailto:${profileData.social.gmail}" title="Gmail"><i class="bi bi-envelope-fill fs-5"></i></a>`;
             }
 
-            // Handle profile image display in dashboard
             const dashboardProfileImageContainer = document.getElementById('dashboardProfileImageContainer');
             if (profileData.profileImage) {
                 dashboardProfileImageContainer.innerHTML = `<img src="${profileData.profileImage}" alt="Profile Image" class="profile-image-dashboard">`;

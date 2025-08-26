@@ -1,11 +1,30 @@
 <?php
-// --- MOCK USER DATA ---
-// This data is available for consistency but not directly used on this page.
-$userProfile = [
-    'firstName' => 'Juan',
-    'lastName' => 'Dela Cruz',
-    'email' => 'juan.delacruz@example.com',
-];
+// notifications.php - Page for users to view their notifications
+
+// Start the session to access logged-in user's data.
+session_start();
+
+// Include the database configuration file.
+include_once '../config.php';
+
+// Check if the user is logged in. If not, redirect them to the login page.
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("location: ../login.php");
+    exit;
+}
+
+// Get the logged-in user's ID from the session.
+$userId = $_SESSION['id'];
+
+// --- FETCH USER SETTINGS FROM DATABASE ---
+$stmt = $conn->prepare("SELECT dark_mode FROM users WHERE id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+$darkModeEnabled = $user ? (bool)$user['dark_mode'] : false;
+$stmt->close();
+$conn->close();
 ?>
 <!doctype html>
 <html lang="en">
@@ -15,8 +34,7 @@ $userProfile = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RAIS Notifications</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="../img/logoulit.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Google Fonts -->
@@ -27,22 +45,14 @@ $userProfile = [
     <style>
         :root {
             --rais-primary-green: #004d40;
-            /* Dark Navy Green for primary elements */
             --rais-dark-green: #00332c;
-            /* Even Darker Navy Green for hover states */
             --rais-text-dark: #333333;
             --rais-text-light: #525252;
             --rais-card-bg: #FFFFFF;
             --rais-light-gray: #E8E8E8;
-            --rais-progress-bg: #D9D9D9;
-            --rais-progress-active: var(--rais-primary-green);
-            /* Use primary green for progress */
             --rais-bg-light: #F7F7F7;
             --rais-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             --rais-button-maroon: #811F1D;
-            /* Maroon for buttons, badges, floating elements */
-            --rais-highlight-light-green: #98FB98;
-            /* Light Green for tour highlights */
         }
 
         body {
@@ -368,7 +378,6 @@ $userProfile = [
             z-index: 100;
         }
         
-        /* Full-Screen Chat Styles for MOBILE */
         #full-screen-chat {
             position: fixed;
             top: 0;
@@ -419,6 +428,51 @@ $userProfile = [
             flex-shrink: 0;
         }
 
+        /* Dark Mode Styles */
+        .dark-mode-logo {
+            display: none;
+        }
+        .dark-mode .light-mode-logo {
+            display: none;
+        }
+        .dark-mode .dark-mode-logo {
+            display: block;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #EAEAEA;
+        }
+        .dark-mode .sidebar {
+            background-color: #1a1a1a;
+            border-right: 1px solid #2c2c2c;
+        }
+        .dark-mode .header,
+        .dark-mode .notification-item,
+        .dark-mode .chat-container,
+        .dark-mode #full-screen-chat,
+        .dark-mode .chat-footer-fullscreen {
+            background-color: #1e1e1e;
+            color: #EAEAEA;
+            border-color: #2c2c2c;
+        }
+        .dark-mode .header {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .dark-mode .header-title,
+        .dark-mode h1, .dark-mode h6,
+        .dark-mode .user-status .me-3,
+        .dark-mode .chat-title-fullscreen {
+            color: #EAEAEA !important;
+        }
+        .dark-mode .notification-link {
+            color: #EAEAEA !important;
+        }
+        .dark-mode .text-muted, .dark-mode .notification-date {
+            color: #B0B0B0 !important;
+        }
+        .dark-mode .notification-link:hover .notification-item {
+            box-shadow: 0 8px 15px rgba(0,0,0,0.2);
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -536,15 +590,15 @@ $userProfile = [
     </style>
 </head>
 
-<body>
+<body class="<?php echo $darkModeEnabled ? 'dark-mode' : ''; ?>">
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar d-flex flex-column">
             <div class="logo">RAIS</div>
             <nav class="nav flex-column">
                 <a class="nav-link" href="dashboard.php"><i class="bi bi-house-door-fill"></i><span>Dashboard</span></a>
-                <a class="nav-link" href="book-consultation.php"><i class="bi bi-calendar-check"></i><span>Book
-                        Consultation</span></a>
+                <a class="nav-link" href="book-consultation.php"><i
+                        class="bi bi-calendar-check"></i><span>Book Consultation</span></a>
                 <a class="nav-link" href="statement-of-account.php"><i class="bi bi-receipt"></i><span>Statement of
                         Account</span></a>
                 <a class="nav-link" href="documents.php"><i class="bi bi-file-earmark-text"></i><span>Documents</span></a>
@@ -564,12 +618,13 @@ $userProfile = [
             <!-- Header -->
             <div class="header">
                 <div class="header-brand d-flex align-items-center">
-                    <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img">
+                    <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img light-mode-logo">
+                    <img src="../img/logo1.png" alt="RAIS Logo Dark" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
                     <span class="header-title">Roman & Associates Immigration Services</span>
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
-                    <div id="headerDate" class="me-3" style="font-weight: 500; color: var(--rais-text-light);"></div>
-                    <a href="../index.html" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
+                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
                     <span class="badge">ACTIVE</span>
                 </div>
             </div>
@@ -703,9 +758,7 @@ $userProfile = [
     </button>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
@@ -728,13 +781,13 @@ $userProfile = [
                     if (isChatVisible) {
                         fullScreenChat.style.display = 'none';
                         mainWrapper.style.display = 'flex';
-                        floatingBtn.style.display = 'flex';
-                        chatToggleBtn.style.display = 'flex';
+                        if(floatingBtn) floatingBtn.style.display = 'flex';
+                        if(chatToggleBtn) chatToggleBtn.style.display = 'flex';
                     } else {
                         fullScreenChat.style.display = 'flex';
                         mainWrapper.style.display = 'none';
-                        floatingBtn.style.display = 'none';
-                        chatToggleBtn.style.display = 'none';
+                        if(floatingBtn) floatingBtn.style.display = 'none';
+                        if(chatToggleBtn) chatToggleBtn.style.display = 'none';
                     }
                 } else {
                     popupChatContainer.classList.toggle('show');

@@ -1,11 +1,30 @@
 <?php
-// --- MOCK USER DATA ---
-// In a real application, this data would come from a database after a user logs in.
-$userProfile = [
-    'firstName' => 'Juan',
-    'lastName' => 'Dela Cruz',
-    'email' => 'juan.delacruz@example.com',
-];
+// documents.php - Page for users to manage their documents
+
+// Start the session to access logged-in user's data.
+session_start();
+
+// Include the database configuration file.
+include_once '../config.php';
+
+// Check if the user is logged in. If not, redirect them to the login page.
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("location: ../login.php");
+    exit;
+}
+
+// Get the logged-in user's ID from the session.
+$userId = $_SESSION['id'];
+
+// Fetch user's dark mode setting
+$stmt = $conn->prepare("SELECT dark_mode FROM users WHERE id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$user = $result->fetch_assoc();
+$darkModeEnabled = $user ? (bool)$user['dark_mode'] : false;
+$stmt->close();
+$conn->close();
 ?>
 <!doctype html>
 <html lang="en">
@@ -15,8 +34,7 @@ $userProfile = [
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>RAIS Documents</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="../img/logoulit.png" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Google Fonts -->
@@ -27,22 +45,14 @@ $userProfile = [
     <style>
         :root {
             --rais-primary-green: #004d40;
-            /* Dark Navy Green for primary elements */
             --rais-dark-green: #00332c;
-            /* Even Darker Navy Green for hover states */
             --rais-text-dark: #333333;
             --rais-text-light: #525252;
             --rais-card-bg: #FFFFFF;
             --rais-light-gray: #E8E8E8;
-            --rais-progress-bg: #D9D9D9;
-            --rais-progress-active: var(--rais-primary-green);
-            /* Use primary green for progress */
             --rais-bg-light: #F7F7F7;
             --rais-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             --rais-button-maroon: #811F1D;
-            /* Maroon for buttons, badges, floating elements */
-            --rais-highlight-light-green: #98FB98;
-            /* Light Green for tour highlights */
         }
 
         body {
@@ -107,14 +117,12 @@ $userProfile = [
             gap: 15px;
             white-space: nowrap;
             transition: background-color 0.3s ease, color 0.3s ease;
-            /* Added color transition */
         }
 
         .sidebar .nav-link.active,
         .sidebar .nav-link:hover {
             background-color: var(--rais-dark-green);
             color: #fff;
-            /* Ensure color stays white on hover/active */
         }
 
         .sidebar .nav-link i {
@@ -122,12 +130,10 @@ $userProfile = [
             min-width: 20px;
             text-align: center;
             transition: transform 0.3s ease;
-            /* Added transform transition for icons */
         }
 
         .sidebar .nav-link:hover i {
             transform: scale(1.1);
-            /* Slight scale on hover */
         }
 
         .sidebar .nav-link span {
@@ -197,7 +203,6 @@ $userProfile = [
             gap: 10px;
         }
 
-        /* Logout button hover effect */
         .header .user-status .btn-link {
             color: var(--rais-text-light);
             transition: color 0.3s ease;
@@ -276,14 +281,11 @@ $userProfile = [
             color: var(--rais-text-light);
             margin-left: 10px;
             transition: color 0.3s ease, transform 0.3s ease;
-            /* Added color and transform transitions */
         }
 
         .document-header .btn-icon:hover {
             color: var(--rais-primary-green);
-            /* Change color on hover */
             transform: translateY(-2px);
-            /* Slight lift effect */
         }
 
         .file-preview-container {
@@ -298,25 +300,18 @@ $userProfile = [
             cursor: pointer;
             padding: 5px;
             border-radius: 8px;
-            /* Added border-radius for styling */
             transition: all 0.2s ease-in-out;
-            /* Added a transition for smooth hover effects */
         }
 
-        /* Hover effect for the file item */
         .file-preview-item:hover {
             background-color: var(--rais-bg-light);
-            /* Light background on hover */
             transform: translateY(-3px);
-            /* Subtle lift effect */
             box-shadow: var(--rais-shadow);
-            /* Add a slight shadow on hover */
         }
 
         .file-preview-item.selected {
             background-color: var(--rais-light-gray);
             border: 2px solid var(--rais-primary-green);
-            /* Add a border for selected state */
         }
 
         .file-preview-item i {
@@ -325,7 +320,6 @@ $userProfile = [
             transition: color 0.2s ease-in-out;
         }
 
-        /* Change icon color on hover */
         .file-preview-item:hover i {
             color: var(--rais-dark-green);
         }
@@ -342,7 +336,6 @@ $userProfile = [
             border: none;
             border-bottom: 2px solid transparent;
             transition: all 0.3s ease;
-            /* Add transition for tabs */
         }
 
         .status-tabs .nav-link.active {
@@ -353,7 +346,6 @@ $userProfile = [
 
         .status-tabs .nav-link:hover {
             color: var(--rais-primary-green);
-            /* Change color on hover */
         }
 
         #previewModal .modal-body img {
@@ -385,14 +377,12 @@ $userProfile = [
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             text-decoration: none;
             transition: background-color 0.2s, transform 0.2s;
-            /* Added transform transition */
             z-index: 100;
         }
 
         .floating-btn:hover {
             background-color: var(--rais-dark-green);
             transform: scale(1.1) rotate(90deg);
-            /* Scale and rotate on hover */
         }
 
         /* Collapsible Chatbox */
@@ -462,7 +452,6 @@ $userProfile = [
 
         .chat-footer .btn:hover i {
             color: white !important;
-            /* Force icon color to white */
         }
 
         .chat-toggle-btn {
@@ -482,7 +471,6 @@ $userProfile = [
             cursor: pointer;
             z-index: 100;
             transition: transform 0.3s ease, background-color 0.3s ease;
-            /* Added transitions */
         }
 
         .chat-toggle-btn:hover {
@@ -490,7 +478,6 @@ $userProfile = [
             transform: scale(1.1);
         }
         
-        /* Full-Screen Chat Styles for MOBILE */
         #full-screen-chat {
             position: fixed;
             top: 0;
@@ -541,6 +528,61 @@ $userProfile = [
             flex-shrink: 0;
         }
 
+        /* Dark Mode Styles */
+        .dark-mode-logo {
+            display: none;
+        }
+        .dark-mode .light-mode-logo {
+            display: none;
+        }
+        .dark-mode .dark-mode-logo {
+            display: block;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #EAEAEA;
+        }
+        .dark-mode .sidebar {
+            background-color: #1a1a1a;
+            border-right: 1px solid #2c2c2c;
+        }
+        .dark-mode .header,
+        .dark-mode .document-section,
+        .dark-mode .modal-content,
+        .dark-mode .chat-container,
+        .dark-mode #full-screen-chat,
+        .dark-mode .chat-footer-fullscreen {
+            background-color: #1e1e1e;
+            color: #EAEAEA;
+            border-color: #2c2c2c;
+        }
+        .dark-mode .header {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .dark-mode .header-title,
+        .dark-mode h1, .dark-mode h5,
+        .dark-mode .user-status .me-3,
+        .dark-mode .chat-title-fullscreen,
+        .dark-mode .file-name {
+            color: #EAEAEA !important;
+        }
+        .dark-mode .status-tabs .nav-link {
+            color: #B0B0B0;
+        }
+        .dark-mode .status-tabs .nav-link.active,
+        .dark-mode .status-tabs .nav-link:hover {
+            color: var(--rais-primary-green);
+        }
+        .dark-mode .file-preview-item:hover {
+            background-color: #2c2c2c;
+        }
+        .dark-mode .file-preview-item.selected {
+            background-color: #2c2c2c;
+        }
+        .dark-mode .modal-header, .dark-mode .modal-footer {
+            border-bottom-color: #2c2c2c;
+            border-top-color: #2c2c2c;
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -658,7 +700,7 @@ $userProfile = [
     </style>
 </head>
 
-<body>
+<body class="<?php echo $darkModeEnabled ? 'dark-mode' : ''; ?>">
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar d-flex flex-column">
@@ -687,12 +729,13 @@ $userProfile = [
             <!-- Header -->
             <div class="header">
                 <div class="header-brand d-flex align-items-center">
-                    <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img">
+                    <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img light-mode-logo">
+                    <img src="../img/logo-1.png" alt="RAIS Logo Dark" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
                     <span class="header-title">Roman & Associates Immigration Services</span>
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
-                    <div id="headerDate" class="me-3" style="font-weight: 500; color: var(--rais-text-light);"></div>
-                    <a href="../index.html" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
+                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
                     <span class="badge">ACTIVE</span>
                 </div>
             </div>
@@ -841,9 +884,7 @@ $userProfile = [
 
 
     <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {

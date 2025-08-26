@@ -1,14 +1,37 @@
 <?php
-// --- MOCK USER DATA ---
-// In a real application, this data would come from a database after a user logs in.
-$userProfile = [
-    'firstName' => 'Juan',
-    'lastName' => 'Dela Cruz',
-    'email' => 'juan.delacruz@example.com',
-    'contact' => '(+63) 917 123 4567',
-    'birthday' => '01/15/1990',
-    'profileImage' => null, 
-];
+// book-consultation.php - Page for users to book a consultation
+
+// Start the session to access logged-in user's data.
+session_start();
+
+// Include the database configuration file.
+include_once '../config.php';
+
+// Check if the user is logged in. If not, redirect them to the login page.
+if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
+    header("location: ../login.php");
+    exit;
+}
+
+// Get the logged-in user's ID from the session.
+$userId = $_SESSION['id'];
+
+// --- FETCH USER DATA & SETTINGS FROM DATABASE ---
+$stmt = $conn->prepare("SELECT firstName, lastName, email, dark_mode FROM users WHERE id = ?");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+$userProfile = $result->fetch_assoc();
+$stmt->close();
+$conn->close();
+
+// If no user is found, handle it gracefully.
+if (!$userProfile) {
+    $userProfile = ['firstName' => 'Guest', 'lastName' => '', 'email' => '', 'dark_mode' => false];
+}
+
+$darkModeEnabled = (bool)$userProfile['dark_mode'];
+
 ?>
 <!doctype html>
 <html lang="en">
@@ -18,8 +41,7 @@ $userProfile = [
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RAIS Book Consultation</title>
     <link rel="icon" href="../img/logoulit.png" />
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
-        xintegrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- Bootstrap Icons CSS -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     <!-- Google Fonts -->
@@ -30,22 +52,14 @@ $userProfile = [
     <style>
         :root {
             --rais-primary-green: #004d40;
-            /* Dark Navy Green for primary elements */
             --rais-dark-green: #00332c;
-            /* Even Darker Navy Green for hover states */
             --rais-text-dark: #333333;
             --rais-text-light: #525252;
             --rais-card-bg: #FFFFFF;
             --rais-light-gray: #E8E8E8;
-            --rais-progress-bg: #D9D9D9;
-            --rais-progress-active: var(--rais-primary-green);
-            /* Use primary green for progress */
             --rais-bg-light: #F7F7F7;
             --rais-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
             --rais-button-maroon: #811F1D;
-            /* Maroon for buttons, badges, floating elements */
-            --rais-highlight-light-green: #98FB98;
-            /* Light Green for tour highlights */
         }
 
         body {
@@ -470,7 +484,6 @@ $userProfile = [
             z-index: 100;
         }
         
-        /* Full-Screen Chat Styles for MOBILE */
         #full-screen-chat {
             position: fixed;
             top: 0;
@@ -533,6 +546,71 @@ $userProfile = [
             }
         }
 
+        /* Dark Mode Styles */
+        .dark-mode-logo {
+            display: none;
+        }
+        .dark-mode .light-mode-logo {
+            display: none;
+        }
+        .dark-mode .dark-mode-logo {
+            display: block;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #EAEAEA;
+        }
+        .dark-mode .sidebar {
+            background-color: #1a1a1a;
+            border-right: 1px solid #2c2c2c;
+        }
+        .dark-mode .header,
+        .dark-mode .booking-wrapper,
+        .dark-mode .chat-container,
+        .dark-mode .modal-content,
+        .dark-mode #full-screen-chat,
+        .dark-mode .chat-footer-fullscreen,
+        .dark-mode .card {
+            background-color: #1e1e1e;
+            color: #EAEAEA;
+            border-color: #2c2c2c;
+        }
+        .dark-mode .header {
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+        .dark-mode .header-title,
+        .dark-mode h1, .dark-mode h2, .dark-mode h4, .dark-mode h5, .dark-mode h6,
+        .dark-mode .user-status .me-3,
+        .dark-mode .chat-title-fullscreen,
+        .dark-mode .weekday,
+        .dark-mode #monthYear {
+            color: #EAEAEA !important;
+        }
+        .dark-mode .booking-info,
+        .dark-mode .time-slot-btn {
+             border-color: #2c2c2c;
+        }
+        .dark-mode .day:hover:not(.empty):not(.disabled) {
+            background-color: #2c2c2c;
+        }
+        .dark-mode .day.disabled {
+            color: #555;
+        }
+        .dark-mode .form-control {
+            background-color: #2a2a2a;
+            color: #EAEAEA;
+            border-color: #3c3c3c;
+        }
+        .dark-mode .form-control:focus {
+            background-color: #2a2a2a;
+            color: #EAEAEA;
+            border-color: var(--rais-primary-green);
+            box-shadow: 0 0 0 0.25rem rgba(0, 77, 64, 0.5);
+        }
+        .dark-mode .text-muted, .dark-mode .info-item {
+            color: #B0B0B0 !important;
+        }
+
         /* Responsive Design */
         @media (max-width: 992px) {
             .booking-wrapper {
@@ -542,6 +620,9 @@ $userProfile = [
             .booking-info {
                 border-right: none;
                 border-bottom: 1px solid var(--rais-light-gray);
+            }
+            .dark-mode .booking-info {
+                border-bottom-color: #2c2c2c;
             }
         }
 
@@ -657,7 +738,7 @@ $userProfile = [
     </style>
 </head>
 
-<body>
+<body class="<?php echo $darkModeEnabled ? 'dark-mode' : ''; ?>">
     <div class="main-wrapper">
         <!-- Sidebar -->
         <aside class="sidebar d-flex flex-column">
@@ -684,12 +765,13 @@ $userProfile = [
             <!-- Header -->
             <div class="header">
                 <div class="header-brand d-flex align-items-center">
-                    <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img">
+                    <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img light-mode-logo">
+                    <img src="../img/logo1.png" alt="RAIS Logo" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
                     <span class="header-title">Roman & Associates Immigration Services</span>
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
-                    <div id="headerDate" class="me-3" style="font-weight: 500; color: var(--rais-text-light);"></div>
-                    <a href="../index.html" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
+                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
                     <span class="badge">ACTIVE</span>
                 </div>
             </div>
@@ -838,14 +920,11 @@ $userProfile = [
     </button>
 
     <!-- Bootstrap JS Bundle -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        xintegrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
             
-            // Update the date dynamically in the header with the new format
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', {
                 month: 'long',
                 day: 'numeric',
@@ -877,7 +956,6 @@ $userProfile = [
                 }
             }
 
-            // Make toggleChat globally accessible
             window.toggleChat = toggleChat;
             
             document.getElementById('backToDashboardBtn').addEventListener('click', toggleChat);
