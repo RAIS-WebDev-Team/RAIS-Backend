@@ -8,9 +8,9 @@ $events = [
         "id" => "event1",
         "title" => "RCIS AT THE IELTS MINI FAIR",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/minifair2.png",
+        "image" => "img/minifair2.png",
         "alt" => "IELTS Mini Fair",
-        "url" => "blog/mini-fair.html",
+        "url" => "mini-fair.php",
         "mapInfo" => [
             "title" => "IELTS Prep at 9.0 Niner Calamba",
             "summary" => "Reviewing English with proven techniques.",
@@ -21,9 +21,9 @@ $events = [
         "id" => "event2",
         "title" => "THE VISITATION: BRIDGING ACADEMIA AND INDUSTRY",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/lasalle.png",
+        "image" => "img/lasalle.png",
         "alt" => "Visitation from academic partners",
-        "url" => "blog/visitation.html",
+        "url" => "visitation.php",
         "mapInfo" => [
             "title" => "Student Life at La Salle Lipa",
             "summary" => "Experience education and values at La Salle.",
@@ -34,27 +34,27 @@ $events = [
         "id" => "event3",
         "title" => "A LONG ROAD FOR “A CALLING TO CANADA”",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/canada.png",
+        "image" => "img/canada.png",
         "alt" => "A Calling to Canada event",
-        "url" => "blog/canada.html",
+        "url" => "canada.php",
         "mapInfo" => null // No specific map point for this one
     ],
     [
         "id" => "event4",
         "title" => "CONNECTING WITH STUDENTS: LAGUNA ALL THE WAY",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/calamba.png",
+        "image" => "img/calamba.png",
         "alt" => "Laguna event",
-        "url" => "blog/calamba.html",
+        "url" => "calamba.php",
         "mapInfo" => null // You can add map info if needed
     ],
     [
         "id" => "event5",
         "title" => "STI LIPA & RAIS: BRIDGING EDUCATION AND INDUSTRY",
         "author" => "Published on: February 28, 2025",
-        "image" => "blog/img/Sti.png",
+        "image" => "img/Sti.png",
         "alt" => "STI Lipa event",
-        "url" => "blog/sti-lipa.html",
+        "url" => "sti-lipa.php",
         "mapInfo" => [
             "title" => "Tech & Training at STI Lipa",
             "summary" => "A look into STI Lipa’s modern curriculum.",
@@ -65,9 +65,9 @@ $events = [
         "id" => "event6",
         "title" => "MAUPAY NGA ADLAW LEYTE",
         "author" => "Imnil Benmarc A. Jolo",
-        "image" => "blog/img/tacloban.png",
+        "image" => "img/tacloban.png",
         "alt" => "Leyte event",
-        "url" => "blog/tacloban.html",
+        "url" => "tacloban.php",
         "mapInfo" => [
             "title" => "Learning English in Tacloban",
             "summary" => "ELA helps students master the language.",
@@ -78,14 +78,13 @@ $events = [
         "id" => "event7",
         "title" => "DLSL LIPA & RAIS: FOSTERING FUTURE LEADERS",
         "author" => "Published on: March 27, 2025",
-        "image" => "blog/img/dlsl.jpg",
+        "image" => "img/dlsl.jpg",
         "alt" => "DLSL Lipa event",
-        "url" => "blog/la-salle.html",
+        "url" => "la-salle.php",
         "mapInfo" => null // Already covered by event2's map point
     ]
 ];
 
-// Prepare locations for the map from the events array
 $map_locations = [];
 foreach ($events as $event) {
     if ($event['mapInfo']) {
@@ -155,12 +154,8 @@ foreach ($events as $event) {
       z-index: 1000;
     }
 
-    .logo-link {
-      text-decoration: none;
-    }
-
     .logo-image {
-      max-height: 45px;
+      max-height: 80px; /* Further increased logo size */
       width: auto;
     }
 
@@ -322,9 +317,9 @@ foreach ($events as $event) {
 
 <body>
   <header>
-    <a href="../index.php" class="logo-link">
-      <img src="img/logo.png" alt="RAIS Events Logo" class="logo-image">
-    </a>
+    <div>
+      <img src="../img/logo.png" alt="RAIS Events Logo" class="logo-image">
+    </div>
     <div class="menu-toggle" id="mobile-menu">
       <div class="bar"></div>
       <div class="bar"></div>
@@ -351,7 +346,11 @@ foreach ($events as $event) {
       <div class="container">
         <div class="row g-4">
 
-          <?php foreach ($events as $event): ?>
+          <?php 
+            // By using array_slice, we only show the first 3 events in this section
+            $blogs_to_display = array_slice($events, 0, 3);
+            foreach ($blogs_to_display as $event): 
+          ?>
           <div class="col-lg-6">
             <a href="<?php echo htmlspecialchars($event['url']); ?>" class="blog-card" id="<?php echo htmlspecialchars($event['id']); ?>">
               <div class="img-wrapper">

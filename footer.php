@@ -226,6 +226,22 @@
         color: #3BA43B;
         transform: scale(1.15);
     }
+    .footer-socials a .bi-twitter-x::before {
+    /* This forces the browser to draw the correct icon character */
+    content: "\f879" !important;
+
+    /* These force the browser to use the correct font and styling */
+    font-family: "bootstrap-icons" !important;
+    font-weight: normal !important;
+    color: white !important;
+    font-size: 22px !important;
+
+    /* These prevent other styles from hiding or transforming the icon */
+    display: inline-block !important;
+    vertical-align: middle !important;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
 
     /* --- Subscription Notice Styles --- */
     .subscription-notice {
@@ -373,7 +389,11 @@
         <div class="footer-socials">
             <a href="https://www.facebook.com/RomansandAssociatesImmigrationServices" target="_blank"><i
                     class="bi bi-facebook"></i></a>
-            <a href="https://x.com/RCIS2022" target="_blank"><i class="bi bi-twitter-x"></i></a>
+          <a href="https://x.com/RCIS2022" target="_blank">
+    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-twitter-x" viewBox="0 0 16 16">
+        <path d="M12.6.75h2.454l-5.36 6.142L16 15.25h-4.937l-3.867-5.07-4.425 5.07H.316l5.733-6.57L0 .75h5.063l3.495 4.633L12.601.75Zm-.86 13.028h1.36L4.323 2.145H2.865l8.875 11.633Z"/>
+    </svg>
+</a>
             <a href="https://www.instagram.com/romancis.ca/" target="_blank"><i class="bi bi-instagram"></i></a>
             <a href="https://www.linkedin.com/company/roman-associates-immigration-services-ltd/" target="_blank"><i
                     class="bi bi-linkedin"></i></a>

@@ -154,12 +154,8 @@ foreach ($events as $event) {
       z-index: 1000;
     }
 
-    .logo-link {
-      text-decoration: none;
-    }
-
     .logo-image {
-      max-height: 45px;
+      max-height: 65px; /* Increased from 55px */
       width: auto;
     }
 
@@ -321,9 +317,9 @@ foreach ($events as $event) {
 
 <body>
   <header>
-    <a href="index.php" class="logo-link">
+    <div>
       <img src="img/logo.png" alt="RAIS Events Logo" class="logo-image">
-    </a>
+    </div>
     <div class="menu-toggle" id="mobile-menu">
       <div class="bar"></div>
       <div class="bar"></div>
@@ -350,7 +346,11 @@ foreach ($events as $event) {
       <div class="container">
         <div class="row g-4">
 
-          <?php foreach ($events as $event): ?>
+          <?php 
+            // By using array_slice, we only show the first 3 events in this section
+            $blogs_to_display = array_slice($events, 0, 3);
+            foreach ($blogs_to_display as $event): 
+          ?>
           <div class="col-lg-6">
             <a href="<?php echo htmlspecialchars($event['url']); ?>" class="blog-card" id="<?php echo htmlspecialchars($event['id']); ?>">
               <div class="img-wrapper">

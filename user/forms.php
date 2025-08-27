@@ -445,11 +445,15 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
         .dark-mode .card,
         .dark-mode .chat-container,
         .dark-mode #full-screen-chat,
-        .dark-mode .chat-footer-fullscreen {
+        .dark-mode .chat-footer-fullscreen,
+        .dark-mode .modal-content {
             background-color: #1e1e1e;
             color: #EAEAEA;
             border-color: #2c2c2c;
         }
+        .dark-mode .modal-header { border-bottom-color: #2c2c2c; }
+        .dark-mode .modal-footer { border-top-color: #2c2c2c; }
+        .dark-mode .btn-close { filter: invert(1) grayscale(100%) brightness(200%); }
         .dark-mode .header {
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
