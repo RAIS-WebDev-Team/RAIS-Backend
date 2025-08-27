@@ -197,7 +197,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
         .dark-mode .dark-mode-logo { display: block; }
         body.dark-mode { background-color: #121212; color: #EAEAEA; }
         .dark-mode .sidebar { background-color: #1a1a1a; border-right: 1px solid #2c2c2c; }
-        .dark-mode .header, .dark-mode .content-card { background-color: #1e1e1e; color: #EAEAEA; border-color: #2c2c2c; }
+        .dark-mode .header, .dark-mode .content-card, .dark-mode .modal-content { background-color: #1e1e1e; color: #EAEAEA; border-color: #2c2c2c; }
         .dark-mode .header { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
         .dark-mode .header-title, .dark-mode h1, .dark-mode h5, .dark-mode .user-status .me-3, .dark-mode p { color: #EAEAEA !important; }
         .dark-mode .form-control { background-color: #2a2a2a; color: #EAEAEA; border-color: #3c3c3c; }
@@ -255,7 +255,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
                     <div class="me-3" style="font-weight: 500;"><?= date('F j, Y') ?></div>
-                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <a href="#" class="btn btn-link power-btn" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-power"></i></a>
                     <span class="badge"><?php echo htmlspecialchars($userProfile['firstName']); ?></span>
                 </div>
             </header>
@@ -340,6 +340,25 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                 </div>
             </main>
         </div>
+    </div>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to log out?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <a href="../logout.php" class="btn btn-danger">Logout</a>
+          </div>
+        </div>
+      </div>
     </div>
 
     <script>

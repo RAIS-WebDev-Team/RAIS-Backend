@@ -903,7 +903,7 @@ $conn->close();
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
-                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <a href="#" class="btn btn-link power-btn" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-power"></i></a>
                     <span class="badge"><?php echo htmlspecialchars($user['firstName']); ?></span>
                 </div>
             </div>
@@ -920,12 +920,6 @@ $conn->close();
                         </div>
                         <input type="file" id="fileUpload" style="display: none;" multiple>
                         
-                        <div class="header-icon-container" onclick="document.getElementById('photoUpload').click()">
-                            <button class="btn-icon"><i class="bi bi-image"></i></button>
-                            <div class="icon-label">Upload Photo</div>
-                        </div>
-                        <input type="file" id="photoUpload" accept="image/*" style="display: none;" multiple>
-
                         <div class="header-icon-container" id="deleteBtnContainer">
                             <button class="btn-icon"><i class="bi bi-trash"></i></button>
                             <div class="icon-label">Delete</div>
@@ -1052,6 +1046,25 @@ $conn->close();
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
             <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to log out?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <a href="../logout.php" class="btn btn-danger">Logout</a>
           </div>
         </div>
       </div>
@@ -1283,7 +1296,6 @@ $conn->close();
             document.querySelectorAll('.file-preview-item').forEach(addFileItemEventListeners);
             
             document.getElementById('fileUpload').onchange = handleFileUpload;
-            document.getElementById('photoUpload').onchange = handleFileUpload;
             document.getElementById('deleteBtnContainer').onclick = triggerDeleteConfirmation;
 
             // Listener for the final delete button in the confirmation modal

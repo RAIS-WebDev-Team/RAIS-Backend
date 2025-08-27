@@ -42,11 +42,19 @@ if (isset($_POST['login'])) {
             exit(); // Stop script execution after redirect
         } else {
             // Invalid password
-            echo "Invalid email or password.";
+            // Store an error message in the session
+            $_SESSION['login_error'] = "Invalid email or password.";
+            // Redirect back to the login page
+            header("Location: login.php");
+            exit();
         }
     } else {
         // Invalid email
-        echo "Invalid email or password.";
+        // Store an error message in the session
+        $_SESSION['login_error'] = "Invalid email or password.";
+        // Redirect back to the login page
+        header("Location: login.php");
+        exit();
     }
     // Close the statement
     $stmt->close();

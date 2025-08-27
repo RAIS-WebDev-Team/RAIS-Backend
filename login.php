@@ -1,6 +1,8 @@
 <?php
 // Page title
 $page_title = "Login - RAIS Create";
+// Start the session to access session variables
+session_start();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -165,19 +167,31 @@ $page_title = "Login - RAIS Create";
           <div class="login-form">
             <h4 class="fw-bold mb-3 fs-3">Login to your Account</h4>
             <p class="mb-4 fs-6">Welcome! Please enter your email address</p>
-<form method="post" action="signin.php">
-            <input type="email"  name="email" class="form-control mb-3" placeholder="Email" required />
-            <input type="password" name="password" class="form-control mb-3" placeholder="Password" required/>
             
-            <button class="btn w-100 fw-bold btn-login" type="submit" name="login">Login</button>
+            <?php
+            // Check if there is a login error message in the session
+            if (isset($_SESSION['login_error'])) {
+                // Display the error message in a Bootstrap alert
+                echo '<div class="alert alert-danger" role="alert">' . $_SESSION['login_error'] . '</div>';
+                // Unset the session variable so the message doesn't show again
+                unset($_SESSION['login_error']);
+            }
+            ?>
 
-            <div class="d-flex justify-content-between mt-3 form-links">
-              <a href="register.php" class="fs-6">Don't have an account?</a>
-              <a href="forgot-pass.php" class="fs-6">Forgot Password?</a>
-            </div>
+            <form method="post" action="signin.php">
+                <input type="email"  name="email" class="form-control mb-3" placeholder="Email" required />
+                <input type="password" name="password" class="form-control mb-3" placeholder="Password" required/>
+                
+                <button class="btn w-100 fw-bold btn-login" type="submit" name="login">Login</button>
+
+                <div class="d-flex justify-content-between mt-3 form-links">
+                  <a href="register.php" class="fs-6">Don't have an account?</a>
+                  <a href="forgot-pass.php" class="fs-6">Forgot Password?</a>
+                </div>
+            </form>
           </div>
         </div>
-        </form>
+        
         <div class="col-md-6 text-center d-none d-md-block">
             <img src="img/logo.png" alt="RAIS Logo" class="img-fluid logo-img" />
         </div>

@@ -173,7 +173,7 @@ $conn->close();
             top: 0;
             z-index: 1020;
         }
-
+        
         .header-brand {
             gap: 10px;
         }
@@ -427,7 +427,7 @@ $conn->close();
         .dark-mode .dark-mode-logo { display: block; }
         body.dark-mode { background-color: #121212; color: #FFFFFF; }
         .dark-mode .sidebar { background-color: #1a1a1a; border-right: 1px solid #2c2c2c; }
-        .dark-mode .header, .dark-mode .chat-container, .dark-mode #full-screen-chat, .dark-mode .chat-footer-fullscreen {
+        .dark-mode .header, .dark-mode .chat-container, .dark-mode #full-screen-chat, .dark-mode .chat-footer-fullscreen, .dark-mode .modal-content {
             background-color: #1e1e1e; color: #FFFFFF; border-color: #2c2c2c;
         }
         .dark-mode .header { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
@@ -594,7 +594,7 @@ $conn->close();
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
-                    <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
+                    <a href="#" class="btn btn-link power-btn" data-bs-toggle="modal" data-bs-target="#logoutModal"><i class="bi bi-power"></i></a>
                     <span class="badge"><?php echo htmlspecialchars($user['firstName']); ?></span>
                 </div>
             </div>
@@ -607,13 +607,13 @@ $conn->close();
                     <div class="col-md-6 mb-4">
                         <div class="summary-card">
                             <h2>Total Amount Due</h2>
-                        <div class="amount">$0</div>
+                            <div class="amount">$0.00</div>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-6 mb-4">
-                    <div class="summary-card" style="background-color: var(--rais-button-maroon);">
-                        <h2>Remaining Balance</h2>
-                        <div class="amount">$0</div>
+                    <div class="col-md-6 mb-4">
+                        <div class="summary-card" style="background-color: var(--rais-button-maroon);">
+                            <h2>Remaining Balance</h2>
+                            <div class="amount">$0.00</div>
                         </div>
                     </div>
                 </div>
@@ -690,6 +690,25 @@ $conn->close();
     <button class="chat-toggle-btn" onclick="toggleChat()">
         <i class="bi bi-chat-dots"></i>
     </button>
+    
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="logoutModalLabel">Confirm Logout</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to log out?
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <a href="../logout.php" class="btn btn-danger">Logout</a>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
