@@ -579,7 +579,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($userProfile['firstName']); ?></span>
                 </div>
             </div>
 

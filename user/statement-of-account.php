@@ -17,7 +17,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 $userId = $_SESSION['id'];
 
 // --- FETCH USER SETTINGS FROM DATABASE ---
-$stmt = $conn->prepare("SELECT dark_mode FROM users WHERE id = ?");
+$stmt = $conn->prepare("SELECT firstName, dark_mode FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -425,16 +425,24 @@ $conn->close();
         .dark-mode-logo { display: none; }
         .dark-mode .light-mode-logo { display: none; }
         .dark-mode .dark-mode-logo { display: block; }
-        body.dark-mode { background-color: #121212; color: #EAEAEA; }
+        body.dark-mode { background-color: #121212; color: #FFFFFF; }
         .dark-mode .sidebar { background-color: #1a1a1a; border-right: 1px solid #2c2c2c; }
         .dark-mode .header, .dark-mode .chat-container, .dark-mode #full-screen-chat, .dark-mode .chat-footer-fullscreen {
-            background-color: #1e1e1e; color: #EAEAEA; border-color: #2c2c2c;
+            background-color: #1e1e1e; color: #FFFFFF; border-color: #2c2c2c;
         }
         .dark-mode .header { box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); }
-        .dark-mode .header-title, .dark-mode h1, .dark-mode .user-status .me-3, .dark-mode .chat-title-fullscreen { color: #EAEAEA !important; }
-        .dark-mode .table { background-color: #1e1e1e; color: #EAEAEA; }
+        .dark-mode .header-title, .dark-mode h1, .dark-mode .user-status .me-3, .dark-mode .chat-title-fullscreen { color: #FFFFFF !important; }
+        .dark-mode .table { background-color: #1e1e1e; color: #FFFFFF; }
+        .dark-mode .table th,
+        .dark-mode .table td {
+            color: #FFFFFF;
+        }
         .dark-mode .table-hover > tbody > tr:hover > * { background-color: #2c2c2c; }
-        .dark-mode .table-light { --bs-table-bg: #2a2a2a; --bs-table-border-color: #3c3c3c; color: #EAEAEA; }
+        .dark-mode .table-light { --bs-table-bg: #2a2a2a; --bs-table-border-color: #3c3c3c; color: #FFFFFF; }
+        .dark-mode .main-content h1,
+        .dark-mode .summary-card {
+            color: #FFFFFF;
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -587,7 +595,7 @@ $conn->close();
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($user['firstName']); ?></span>
                 </div>
             </div>
 
@@ -599,13 +607,13 @@ $conn->close();
                     <div class="col-md-6 mb-4">
                         <div class="summary-card">
                             <h2>Total Amount Due</h2>
-                            <div class="amount">$0.00</div>
-                        </div>
+                        <div class="amount">$0</div>
                     </div>
-                    <div class="col-md-6 mb-4">
-                        <div class="summary-card" style="background-color: var(--rais-button-maroon);">
-                            <h2>Remaining Balance</h2>
-                            <div class="amount">$0.00</div>
+                </div>
+                <div class="col-md-6 mb-4">
+                    <div class="summary-card" style="background-color: var(--rais-button-maroon);">
+                        <h2>Remaining Balance</h2>
+                        <div class="amount">$0</div>
                         </div>
                     </div>
                 </div>
@@ -729,4 +737,3 @@ $conn->close();
 </body>
 
 </html>
-

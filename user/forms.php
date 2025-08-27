@@ -264,6 +264,16 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
             transform: translateY(-5px);
         }
 
+        .btn-form-action {
+            color: var(--rais-primary-green);
+            border-color: var(--rais-primary-green);
+        }
+
+        .btn-form-action:hover {
+            background-color: var(--rais-primary-green);
+            color: white;
+        }
+
         /* Floating Button */
         .floating-btn {
             position: fixed;
@@ -460,6 +470,14 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
             background-color: var(--rais-primary-green);
             border-color: var(--rais-primary-green);
         }
+        .dark-mode .btn-form-action {
+            color: #EAEAEA;
+            border-color: #EAEAEA;
+        }
+        .dark-mode .btn-form-action:hover {
+            background-color: #EAEAEA;
+            color: #1e1e1e;
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -612,7 +630,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($userProfile['firstName']); ?></span>
                 </div>
             </div>
 
@@ -623,44 +641,9 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                     <div class="col-12 col-md-6 col-lg-4">
                         <div class="card form-card h-100">
                             <div class="card-body">
-                                <h5 class="card-title">Intake Form</h5>
-                                <p class="card-text text-muted">Complete this form to start your profile.</p>
-                                <a href="#" class="btn btn-sm btn-outline-secondary"
-                                    style="color: var(--rais-primary-green); border-color: var(--rais-primary-green);">Fill
-                                    Out</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="card form-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">Client Consent Form</h5>
-                                <p class="card-text text-muted">Acknowledge and consent to our services.</p>
-                                <a href="#" class="btn btn-sm btn-outline-secondary"
-                                    style="color: var(--rais-primary-green); border-color: var(--rais-primary-green);">Fill
-                                    Out</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="card form-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">Family Information Form</h5>
-                                <p class="card-text text-muted">Provide details about your family members.</p>
-                                <a href="#" class="btn btn-sm btn-outline-secondary"
-                                    style="color: var(--rais-primary-green); border-color: var(--rais-primary-green);">Fill
-                                    Out</a>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="col-12 col-md-6 col-lg-4">
-                        <div class="card form-card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">Educational History Form</h5>
-                                <p class="card-text text-muted">Provide details of your academic background.</p>
-                                <a href="#" class="btn btn-sm btn-outline-secondary"
-                                    style="color: var(--rais-primary-green); border-color: var(--rais-primary-green);">Fill
-                                    Out</a>
+                                <h5 class="card-title">Application Form</h5>
+                                <p class="card-text text-muted">Complete this form and apply in our services.</p>
+                                <a href="../application-form.php" class="btn btn-sm btn-outline-secondary btn-form-action">Fill Out</a>
                             </div>
                         </div>
                     </div>

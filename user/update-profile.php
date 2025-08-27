@@ -18,50 +18,78 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $phone = $_POST['phone'];
     $address = $_POST['address'];
     $birthday = $_POST['birthday'];
-    // Retrieve social media links
     $facebook = $_POST['facebook'];
     $instagram = $_POST['instagram'];
     $gmail = $_POST['gmail'];
-    
+
+    // --- Logic to determine progress ---
+    $profilePictureUploaded = false;
+    $birthdayAdded = !empty($birthday);
+    $socialLinksAdded = !empty($facebook) || !empty($instagram) || !empty($gmail);
+
     // --- Handle file upload ---
     $profileImagePath = null;
     if (isset($_FILES['profileImage']) && $_FILES['profileImage']['error'] == 0) {
         $targetDir = "../uploads/";
-        // Create directory if it doesn't exist
         if (!file_exists($targetDir)) {
             mkdir($targetDir, 0777, true);
         }
-        $fileName = basename($_FILES["profileImage"]["name"]);
+        $fileName = uniqid() . '-' . basename($_FILES["profileImage"]["name"]);
         $targetFilePath = $targetDir . $fileName;
         $fileType = pathinfo($targetFilePath, PATHINFO_EXTENSION);
 
-        // Allow certain file formats
         $allowTypes = array('jpg', 'png', 'jpeg', 'gif');
         if (in_array(strtolower($fileType), $allowTypes)) {
-            // Upload file to server
             if (move_uploaded_file($_FILES["profileImage"]["tmp_name"], $targetFilePath)) {
                 $profileImagePath = "uploads/" . $fileName;
+                $profilePictureUploaded = true; // Set flag on successful upload
             }
         }
     }
 
     // --- Prepare SQL statement to update the database ---
-    if ($profileImagePath) {
-        // Query includes profile image and social links
-        $stmt = $conn->prepare("UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, birthday = ?, profileImage = ?, facebook = ?, instagram = ?, gmail = ? WHERE id = ?");
-        $stmt->bind_param("sssssssssi", $firstName, $lastName, $phone, $address, $birthday, $profileImagePath, $facebook, $instagram, $gmail, $userId);
-    } else {
-        // Query includes social links but no new profile image
-        $stmt = $conn->prepare("UPDATE users SET firstName = ?, lastName = ?, phone = ?, address = ?, birthday = ?, facebook = ?, instagram = ?, gmail = ? WHERE id = ?");
-        $stmt->bind_param("ssssssssi", $firstName, $lastName, $phone, $address, $birthday, $facebook, $instagram, $gmail, $userId);
+    $sqlParts = [
+        "firstName = ?", "lastName = ?", "phone = ?", "address = ?", 
+        "birthday = ?", "facebook = ?", "instagram = ?", "gmail = ?"
+    ];
+    $params = [$firstName, $lastName, $phone, $address, $birthday, $facebook, $instagram, $gmail];
+    $types = "ssssssss";
+
+    // Fetch current flags to ensure we don't unset a completed step
+    $stmt_check = $conn->prepare("SELECT profile_picture_uploaded, birthday_added, social_links_added FROM users WHERE id = ?");
+    $stmt_check->bind_param("i", $userId);
+    $stmt_check->execute();
+    $currentUserFlags = $stmt_check->get_result()->fetch_assoc();
+    $stmt_check->close();
+
+    // Set flags to 1 if the action was just completed OR if it was already complete
+    if ($profilePictureUploaded || $currentUserFlags['profile_picture_uploaded']) {
+        $sqlParts[] = "profile_picture_uploaded = 1";
     }
+    if ($birthdayAdded || $currentUserFlags['birthday_added']) {
+        $sqlParts[] = "birthday_added = 1";
+    }
+    if ($socialLinksAdded || $currentUserFlags['social_links_added']) {
+        $sqlParts[] = "social_links_added = 1";
+    }
+
+    if ($profileImagePath) {
+        $sqlParts[] = "profileImage = ?";
+        $params[] = $profileImagePath;
+        $types .= "s";
+    }
+    
+    $params[] = $userId;
+    $types .= "i";
+
+    $sql = "UPDATE users SET " . implode(', ', $sqlParts) . " WHERE id = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
 
     // Execute the statement and redirect
     if ($stmt->execute()) {
-        // On success, redirect back to the profile page
         header("location: profile.php"); 
     } else {
-        // On failure, show an error
         echo "Error updating record: " . $conn->error;
     }
 

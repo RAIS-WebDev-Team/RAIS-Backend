@@ -158,11 +158,18 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
             padding: 5px 15px;
             border-radius: 20px;
         }
+        .user-status .btn {
+            color: var(--rais-text-light);
+            font-size: 1.5rem;
+            padding: 0;
+        }
         .power-btn i {
             color: #dc3545;
+            transition: color 0.2s ease-in-out, transform 0.2s ease-in-out;
         }
         .power-btn:hover i {
             color: #a71d2a;
+            transform: scale(1.1);
         }
         .main-content { padding: 30px; }
         .content-card {
@@ -243,13 +250,13 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
             <header class="header">
                 <div class="header-brand d-flex align-items-center">
                     <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img light-mode-logo">
-                    <img src="../img/logo1s.png" alt="RAIS Logo Dark" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
+                    <img src="../img/logo1.png" alt="RAIS Logo Dark" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
                     <span class="header-title">Roman & Associates Immigration Services</span>
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
                     <div class="me-3" style="font-weight: 500;"><?= date('F j, Y') ?></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($userProfile['firstName']); ?></span>
                 </div>
             </header>
 
@@ -260,7 +267,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                     <div id="profile-view" class="profile-view text-center">
                         <div id="profileViewImageContainer">
                             <?php if (!empty($userProfile['profileImage'])): ?>
-                                <img src="../<?php echo htmlspecialchars($userProfile['profileImage']); ?>" alt="Profile Image" class="profile-image">
+                                <img src="../<?php echo htmlspecialchars($userProfile['profileImage']); ?>?v=<?php echo time(); ?>" alt="Profile Image" class="profile-image">
                             <?php else: ?>
                                 <i class="bi bi-person-circle profile-icon"></i>
                             <?php endif; ?>
@@ -288,7 +295,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                     <!-- Profile Edit Form (Initially Hidden) -->
                     <form id="profile-edit-form" action="update-profile.php" method="POST" enctype="multipart/form-data">
                         <div class="mb-3 text-center">
-                            <img id="profileImagePreview" src="<?php echo !empty($userProfile['profileImage']) ? '../' . htmlspecialchars($userProfile['profileImage']) : 'https://placehold.co/100x100'; ?>" alt="Profile Preview" class="profile-image-preview mb-2">
+                            <img id="profileImagePreview" src="<?php echo !empty($userProfile['profileImage']) ? '../' . htmlspecialchars($userProfile['profileImage']) . '?v=' . time() : 'https://placehold.co/100x100'; ?>" alt="Profile Preview" class="profile-image-preview mb-2">
                             <input class="form-control" type="file" name="profileImage" id="profileImageUpload">
                         </div>
                         <div class="row">

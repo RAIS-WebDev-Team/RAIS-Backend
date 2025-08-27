@@ -772,7 +772,7 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($userProfile['firstName']); ?></span>
                 </div>
             </div>
 
@@ -781,7 +781,8 @@ $darkModeEnabled = (bool)$userProfile['dark_mode'];
                 <div id="booking-view">
                     <div class="booking-wrapper">
                         <div class="booking-info">
-                            <img src="../img/logoulit.png" alt="RAIS Logo" class="logo">
+                            <img src="../img/logoulit.png" alt="RAIS Logo" class="logo light-mode-logo">
+                            <img src="../img/logowhite.png" alt="RAIS Logo Dark" class="logo dark-mode-logo" onerror="this.style.display='none'">
                             <hr>
                             <h2>45 Minute Meeting</h2>
                             <div class="info-item mt-3">

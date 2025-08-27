@@ -17,7 +17,8 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 $userId = $_SESSION['id'];
 
 // --- FETCH USER SETTINGS FROM DATABASE ---
-$stmt = $conn->prepare("SELECT dark_mode FROM users WHERE id = ?");
+// Updated to fetch firstName for the header badge.
+$stmt = $conn->prepare("SELECT firstName, dark_mode FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -625,7 +626,7 @@ $conn->close();
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($user['firstName']); ?></span>
                 </div>
             </div>
 
@@ -669,12 +670,12 @@ $conn->close();
                     </div>
                     <div class="col-12">
                         <a href="../blog/calamba.php" class="text-decoration-none text-dark notification-link">
-                            <div class="notification-item read">
+                            <div class="notification-item ">
                                 <div class="d-flex align-items-center gap-3">
                                     <img src="../blog/img/calamba.png" alt="Blog Post Image"
                                         class="notification-image">
                                     <div>
-                                        <h6 class="notification-title text-decoration-line-through">New Blog Post: Visit to Laguna</h6>
+                                        <h6 class="notification-title ">New Blog Post: Visit to Laguna</h6>
                                         <p class="mb-0 text-muted">Read about our team's recent visit to Calamba, Laguna.</p>
                                     </div>
                                     <div class="ms-auto text-end">

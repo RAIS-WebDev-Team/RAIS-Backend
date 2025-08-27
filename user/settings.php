@@ -17,7 +17,7 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
 $userId = $_SESSION['id'];
 
 // Fetch user's dark mode setting
-$stmt = $conn->prepare("SELECT dark_mode FROM users WHERE id = ?");
+$stmt = $conn->prepare("SELECT firstName, dark_mode FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
@@ -471,6 +471,21 @@ $stmt->close();
         .dark-mode .toast .btn-close {
             filter: invert(1) grayscale(100%) brightness(200%);
         }
+        .dark-mode .form-check-input:checked {
+            background-color: var(--rais-primary-green);
+            border-color: var(--rais-primary-green);
+        }
+        .dark-mode .btn-outline-secondary {
+            color: #EAEAEA;
+            border-color: #EAEAEA;
+        }
+        .dark-mode .btn-outline-secondary:hover {
+            background-color: #EAEAEA;
+            color: #1e1e1e;
+        }
+        .dark-mode .text-danger {
+            color: #ff5252 !important;
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -618,7 +633,7 @@ $stmt->close();
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"><?= date('F j, Y') ?></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($user['firstName']); ?></span>
                 </div>
             </div>
 
@@ -642,8 +657,7 @@ $stmt->close();
                             <p class="mb-0 text-muted">Update your account password regularly.</p>
                         </div>
                         <div>
-                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal"
-                                style="color: var(--rais-primary-green); border-color: var(--rais-primary-green);">Change</button>
+                            <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#changePasswordModal">Change</button>
                         </div>
                     </div>
                     <div class="setting-item">
@@ -840,7 +854,37 @@ $stmt->close();
             // Change Password Form Submission
             document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
                 e.preventDefault();
-                // ... (rest of the password change logic remains the same)
+                const currentPassword = document.getElementById('currentPassword').value;
+                const newPassword = document.getElementById('newPassword').value;
+                const confirmNewPassword = document.getElementById('confirmNewPassword').value;
+
+                if (newPassword !== confirmNewPassword) {
+                    showAlert('New passwords do not match.', 'danger');
+                    return;
+                }
+
+                const formData = new FormData();
+                formData.append('currentPassword', currentPassword);
+                formData.append('newPassword', newPassword);
+
+                fetch('change-password.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        showAlert('Password changed successfully!');
+                        const modal = bootstrap.Modal.getInstance(document.getElementById('changePasswordModal'));
+                        modal.hide();
+                        document.getElementById('changePasswordForm').reset();
+                    } else {
+                        showAlert(data.error || 'Failed to change password.', 'danger');
+                    }
+                })
+                .catch(() => {
+                    showAlert('An error occurred.', 'danger');
+                });
             });
 
             // Delete Account Form Submission

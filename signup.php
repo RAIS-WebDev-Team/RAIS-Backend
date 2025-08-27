@@ -1,5 +1,5 @@
 <?php
-include "db.php";
+include "config.php";
 if (isset($_POST['create'])) {
     $fName = $_POST['fName'];
     $lName = $_POST['lName'];

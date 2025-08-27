@@ -13,16 +13,159 @@ if (!isset($_SESSION['loggedin']) || $_SESSION['loggedin'] !== true) {
     exit;
 }
 
-// Get the logged-in user's ID from the session.
 $userId = $_SESSION['id'];
 
-// Fetch user's dark mode setting
-$stmt = $conn->prepare("SELECT dark_mode FROM users WHERE id = ?");
+// --- SERVER-SIDE ACTION HANDLER (UPLOAD/DELETE) ---
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json');
+    $response = [];
+
+    // --- HANDLE FILE UPLOAD ---
+    if (isset($_FILES['file'])) {
+        $file = $_FILES['file'];
+        // Define the upload directory. Ensure this directory exists and is writable.
+        $uploadDir = '../uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        // Check for upload errors.
+        if ($file['error'] === UPLOAD_ERR_OK) {
+            $originalFileName = basename($file['name']);
+            $fileType = $file['type']; // We still need this to send back to the client
+            // Create a unique filename to prevent overwriting existing files.
+            $uniqueFileName = uniqid() . '-' . preg_replace("/[^a-zA-Z0-9\._-]/", "", $originalFileName);
+            $filePath = $uploadDir . $uniqueFileName;
+
+            // Move the file to the uploads directory.
+            if (move_uploaded_file($file['tmp_name'], $filePath)) {
+                // Save file metadata to the database, without the file_type column.
+                $stmt = $conn->prepare("INSERT INTO user_documents (user_id, file_name, file_path, status) VALUES (?, ?, ?, 'pending')");
+                $stmt->bind_param("iss", $userId, $originalFileName, $filePath);
+                if ($stmt->execute()) {
+                    $lastId = $stmt->insert_id;
+                    // Send fileType in the response so the JS can render the icon immediately.
+                    $response = ['status' => 'success', 'fileId' => $lastId, 'fileName' => $originalFileName, 'fileType' => $fileType, 'filePath' => $filePath];
+                } else {
+                    $response = ['status' => 'error', 'message' => 'Database error: ' . $stmt->error];
+                    unlink($filePath); // Clean up the uploaded file if DB insert fails.
+                }
+                $stmt->close();
+            } else {
+                $response = ['status' => 'error', 'message' => 'Failed to move uploaded file. Check directory permissions.'];
+            }
+        } else {
+            $response = ['status' => 'error', 'message' => 'File upload error code: ' . $file['error']];
+        }
+    }
+    // --- HANDLE FILE DELETE ---
+    elseif (isset($_POST['action']) && $_POST['action'] === 'delete') {
+        $fileIds = isset($_POST['ids']) ? (is_array($_POST['ids']) ? $_POST['ids'] : [$_POST['ids']]) : [];
+        
+        if (!empty($fileIds)) {
+            // Prepare placeholders for the SQL query to handle multiple IDs safely.
+            $placeholders = implode(',', array_fill(0, count($fileIds), '?'));
+            $types = str_repeat('i', count($fileIds));
+
+            // First, select the files to verify ownership and get their paths for deletion.
+            $sql = "SELECT id, file_path FROM user_documents WHERE user_id = ? AND id IN ($placeholders)";
+            $stmt = $conn->prepare($sql);
+            $params = array_merge([$userId], $fileIds);
+            $stmt->bind_param('i' . $types, ...$params);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $filesToDelete = $result->fetch_all(MYSQLI_ASSOC);
+            $stmt->close();
+
+            if (!empty($filesToDelete)) {
+                $idsToDelete = array_column($filesToDelete, 'id');
+                $placeholdersToDelete = implode(',', array_fill(0, count($idsToDelete), '?'));
+                $typesToDelete = str_repeat('i', count($idsToDelete));
+
+                // Delete records from the database.
+                $stmt_delete = $conn->prepare("DELETE FROM user_documents WHERE user_id = ? AND id IN ($placeholdersToDelete)");
+                $delete_params = array_merge([$userId], $idsToDelete);
+                $stmt_delete->bind_param('i' . $typesToDelete, ...$delete_params);
+
+                if ($stmt_delete->execute()) {
+                    // After successful DB deletion, delete files from the server.
+                    foreach ($filesToDelete as $file) {
+                        if (file_exists($file['file_path'])) {
+                            unlink($file['file_path']);
+                        }
+                    }
+                    $response = ['status' => 'success', 'message' => "File(s) deleted successfully."];
+                } else {
+                    $response = ['status' => 'error', 'message' => "Database deletion failed: " . $stmt_delete->error];
+                }
+                $stmt_delete->close();
+            } else {
+                $response = ['status' => 'error', 'message' => "No matching files found or permission denied."];
+            }
+        } else {
+            $response = ['status' => 'error', 'message' => 'No file IDs provided.'];
+        }
+    } else {
+        $response = ['status' => 'error', 'message' => 'Invalid request.'];
+    }
+
+    // Return the JSON response and stop script execution.
+    echo json_encode($response);
+    $conn->close();
+    exit;
+}
+
+// --- PAGE LOAD LOGIC (GET REQUEST) ---
+
+// Fetch user's first name and dark mode setting.
+$stmt = $conn->prepare("SELECT firstName, dark_mode FROM users WHERE id = ?");
 $stmt->bind_param("i", $userId);
 $stmt->execute();
 $result = $stmt->get_result();
 $user = $result->fetch_assoc();
 $darkModeEnabled = $user ? (bool)$user['dark_mode'] : false;
+$stmt->close();
+
+// Fetch all documents for the logged-in user and categorize them.
+$pendingFiles = [];
+$approvedFiles = [];
+$cancelledFiles = [];
+
+// Select documents without the 'file_type' column.
+$stmt = $conn->prepare("SELECT id, file_name, file_path, status FROM user_documents WHERE user_id = ? ORDER BY upload_date DESC");
+$stmt->bind_param("i", $userId);
+$stmt->execute();
+$result = $stmt->get_result();
+while ($row = $result->fetch_assoc()) {
+    // Infer file_type from the filename extension for rendering purposes.
+    $extension = strtolower(pathinfo($row['file_name'], PATHINFO_EXTENSION));
+    $inferred_file_type = 'application/octet-stream'; // Default type
+    $image_extensions = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp'];
+    $word_extensions = ['doc', 'docx'];
+
+    if (in_array($extension, $image_extensions)) {
+        $inferred_file_type = 'image/' . $extension;
+    } elseif ($extension === 'pdf') {
+        $inferred_file_type = 'application/pdf';
+    } elseif (in_array($extension, $word_extensions)) {
+        $inferred_file_type = 'application/msword';
+    }
+    // Add the inferred type to the row array so the rest of the code can use it.
+    $row['file_type'] = $inferred_file_type;
+
+    switch ($row['status']) {
+        case 'approved':
+            $approvedFiles[] = $row;
+            break;
+        case 'cancelled':
+            $cancelledFiles[] = $row;
+            break;
+        case 'pending':
+        default:
+            $pendingFiles[] = $row;
+            break;
+    }
+}
 $stmt->close();
 $conn->close();
 ?>
@@ -272,6 +415,7 @@ $conn->close();
             justify-content: flex-end;
             align-items: center;
             margin-bottom: 1rem;
+            gap: 20px;
         }
 
         .document-header .btn-icon {
@@ -279,13 +423,25 @@ $conn->close();
             border: none;
             font-size: 1.25rem;
             color: var(--rais-text-light);
-            margin-left: 10px;
             transition: color 0.3s ease, transform 0.3s ease;
         }
 
         .document-header .btn-icon:hover {
             color: var(--rais-primary-green);
             transform: translateY(-2px);
+        }
+        
+        .header-icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .icon-label {
+            font-size: 0.75rem;
+            color: var(--rais-text-light);
+            margin-top: 4px;
         }
 
         .file-preview-container {
@@ -329,6 +485,9 @@ $conn->close();
             color: var(--rais-text-dark);
             margin-top: 0.5rem;
             word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
 
         .status-tabs .nav-link {
@@ -583,6 +742,15 @@ $conn->close();
             border-bottom-color: #2c2c2c;
             border-top-color: #2c2c2c;
         }
+        .dark-mode .file-preview-item i {
+            color: #EAEAEA;
+        }
+        .dark-mode .document-header .btn-icon {
+            color: #EAEAEA;
+        }
+        .dark-mode .icon-label {
+            color: #B0B0B0;
+        }
 
         /* Responsive Design */
         @media (max-width: 768px) {
@@ -730,13 +898,13 @@ $conn->close();
             <div class="header">
                 <div class="header-brand d-flex align-items-center">
                     <img src="../img/logo.png" alt="RAIS Logo" class="header-logo-img light-mode-logo">
-                    <img src="../img/logo-1.png" alt="RAIS Logo Dark" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
+                    <img src="../img/logo1.png" alt="RAIS Logo Dark" class="header-logo-img dark-mode-logo" onerror="this.style.display='none'">
                     <span class="header-title">Roman & Associates Immigration Services</span>
                 </div>
                 <div class="user-status d-flex align-items-center gap-2">
                     <div id="headerDate" class="me-3" style="font-weight: 500;"></div>
                     <a href="../logout.php" class="btn btn-link power-btn"><i class="bi bi-power"></i></a>
-                    <span class="badge">ACTIVE</span>
+                    <span class="badge"><?php echo htmlspecialchars($user['firstName']); ?></span>
                 </div>
             </div>
 
@@ -746,23 +914,24 @@ $conn->close();
 
                 <div class="document-section">
                     <div class="document-header">
-                        <button class="btn-icon" onclick="document.getElementById('fileUpload').click()"><i
-                                class="bi bi-file-earmark-arrow-up"></i></button>
-                        <input type="file" id="fileUpload" style="display: none;" multiple
-                            onchange="handleFileUpload(event, 'pendingFiles')">
-                        <button class="btn-icon" onclick="document.getElementById('photoUpload').click()"><i
-                                class="bi bi-image"></i></button>
-                        <input type="file" id="photoUpload" accept="image/*" style="display: none;"
-                            onchange="handleFileUpload(event, 'pendingFiles')">
-                        <button class="btn-icon" onclick="deleteSelectedFiles('pendingFiles')"><i
-                                class="bi bi-trash"></i></button>
-                    </div>
-                    <div id="pendingFiles" class="file-preview-container">
-                        <!-- Uploaded files will appear here -->
-                    </div>
-                </div>
+                        <div class="header-icon-container" onclick="document.getElementById('fileUpload').click()">
+                            <button class="btn-icon"><i class="bi bi-file-earmark-arrow-up"></i></button>
+                            <div class="icon-label">Upload File</div>
+                        </div>
+                        <input type="file" id="fileUpload" style="display: none;" multiple>
+                        
+                        <div class="header-icon-container" onclick="document.getElementById('photoUpload').click()">
+                            <button class="btn-icon"><i class="bi bi-image"></i></button>
+                            <div class="icon-label">Upload Photo</div>
+                        </div>
+                        <input type="file" id="photoUpload" accept="image/*" style="display: none;" multiple>
 
-                <div class="document-section">
+                        <div class="header-icon-container" id="deleteBtnContainer">
+                            <button class="btn-icon"><i class="bi bi-trash"></i></button>
+                            <div class="icon-label">Delete</div>
+                        </div>
+                    </div>
+                    <hr>
                     <ul class="nav nav-tabs status-tabs" id="statusTab" role="tablist">
                         <li class="nav-item" role="presentation">
                             <button class="nav-link active" id="pending-tab" data-bs-toggle="tab"
@@ -783,26 +952,64 @@ $conn->close();
                     <div class="tab-content pt-3">
                         <div class="tab-pane fade show active" id="pending" role="tabpanel"
                             aria-labelledby="pending-tab">
-                            <div class="file-preview-container">
-                                <div class="file-preview-item">
-                                    <i class="bi bi-folder"></i>
-                                    <div class="file-name">example file</div>
-                                </div>
-                                <div class="file-preview-item">
-                                    <i class="bi bi-folder"></i>
-                                    <div class="file-name">example file</div>
-                                </div>
-                                <div class="file-preview-item">
-                                    <i class="bi bi-image-fill"></i>
-                                    <div class="file-name">sample img</div>
-                                </div>
+                            <div id="pendingFiles" class="file-preview-container">
+                                <?php if (empty($pendingFiles)): ?>
+                                    <p class="text-muted w-100 text-center">No pending documents. Upload files using the icons above.</p>
+                                <?php else: ?>
+                                    <?php foreach ($pendingFiles as $file): ?>
+                                        <?php
+                                            $iconClass = 'bi-file-earmark-text'; // Default icon
+                                            if (strpos($file['file_type'], 'image/') === 0) $iconClass = 'bi-file-earmark-image';
+                                            if (strpos($file['file_type'], 'pdf') !== false) $iconClass = 'bi-file-earmark-pdf';
+                                            if (strpos($file['file_type'], 'word') !== false) $iconClass = 'bi-file-earmark-word';
+                                        ?>
+                                        <div class="file-preview-item" data-file-id="<?= htmlspecialchars($file['id']) ?>" data-file-path="<?= htmlspecialchars($file['file_path']) ?>" data-file-name="<?= htmlspecialchars($file['file_name']) ?>" data-file-type="<?= htmlspecialchars($file['file_type']) ?>">
+                                            <i class="bi <?= $iconClass ?>"></i>
+                                            <div class="file-name" title="<?= htmlspecialchars($file['file_name']) ?>"><?= htmlspecialchars($file['file_name']) ?></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
                             </div>
                         </div>
                         <div class="tab-pane fade" id="approved" role="tabpanel" aria-labelledby="approved-tab">
-                            <!-- Approved files will appear here -->
+                             <div id="approvedFiles" class="file-preview-container">
+                                <?php if (empty($approvedFiles)): ?>
+                                    <p class="text-muted w-100 text-center">No approved documents.</p>
+                                <?php else: ?>
+                                    <?php foreach ($approvedFiles as $file): ?>
+                                        <?php
+                                            $iconClass = 'bi-file-earmark-text';
+                                            if (strpos($file['file_type'], 'image/') === 0) $iconClass = 'bi-file-earmark-image';
+                                            if (strpos($file['file_type'], 'pdf') !== false) $iconClass = 'bi-file-earmark-pdf';
+                                            if (strpos($file['file_type'], 'word') !== false) $iconClass = 'bi-file-earmark-word';
+                                        ?>
+                                        <div class="file-preview-item" data-file-id="<?= htmlspecialchars($file['id']) ?>" data-file-path="<?= htmlspecialchars($file['file_path']) ?>" data-file-name="<?= htmlspecialchars($file['file_name']) ?>" data-file-type="<?= htmlspecialchars($file['file_type']) ?>">
+                                            <i class="bi <?= $iconClass ?>"></i>
+                                            <div class="file-name" title="<?= htmlspecialchars($file['file_name']) ?>"><?= htmlspecialchars($file['file_name']) ?></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                         <div class="tab-pane fade" id="cancelled" role="tabpanel" aria-labelledby="cancelled-tab">
-                            <!-- Cancelled files will appear here -->
+                             <div id="cancelledFiles" class="file-preview-container">
+                                <?php if (empty($cancelledFiles)): ?>
+                                    <p class="text-muted w-100 text-center">No cancelled documents.</p>
+                                <?php else: ?>
+                                    <?php foreach ($cancelledFiles as $file): ?>
+                                        <?php
+                                            $iconClass = 'bi-file-earmark-text';
+                                            if (strpos($file['file_type'], 'image/') === 0) $iconClass = 'bi-file-earmark-image';
+                                            if (strpos($file['file_type'], 'pdf') !== false) $iconClass = 'bi-file-earmark-pdf';
+                                            if (strpos($file['file_type'], 'word') !== false) $iconClass = 'bi-file-earmark-word';
+                                        ?>
+                                        <div class="file-preview-item" data-file-id="<?= htmlspecialchars($file['id']) ?>" data-file-path="<?= htmlspecialchars($file['file_path']) ?>" data-file-name="<?= htmlspecialchars($file['file_name']) ?>" data-file-type="<?= htmlspecialchars($file['file_type']) ?>">
+                                            <i class="bi <?= $iconClass ?>"></i>
+                                            <div class="file-name" title="<?= htmlspecialchars($file['file_name']) ?>"><?= htmlspecialchars($file['file_name']) ?></div>
+                                        </div>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -831,6 +1038,25 @@ $conn->close();
         </div>
     </div>
 
+    <!-- Confirmation Modal -->
+    <div class="modal fade" id="confirmDeleteModal" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="confirmDeleteModalLabel">Confirm Deletion</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            Are you sure you want to delete the selected file(s)? This action cannot be undone.
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Floating Action Button -->
     <a href="book-flight.php" class="floating-btn text-decoration-none">
         <i class="bi bi-plus-lg"></i>
@@ -843,7 +1069,6 @@ $conn->close();
             <i class="bi bi-x-lg text-white"></i>
         </div>
         <div class="chat-body">
-            <!-- Chat messages will go here -->
             <div class="text-center text-muted">Start a new conversation.</div>
         </div>
         <div class="chat-footer">
@@ -888,20 +1113,21 @@ $conn->close();
 
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            // Update the date dynamically in the header with the new format
+            // Update the date dynamically in the header
             document.getElementById('headerDate').textContent = new Date().toLocaleDateString('en-US', {
                 month: 'long',
                 day: 'numeric',
                 year: 'numeric'
             });
             
+            // --- CHAT TOGGLE LOGIC ---
             const mainWrapper = document.querySelector('.main-wrapper');
             const floatingBtn = document.querySelector('.floating-btn');
             const chatToggleBtn = document.querySelector('.chat-toggle-btn');
             const popupChatContainer = document.getElementById('chatContainer');
             const fullScreenChat = document.getElementById('full-screen-chat');
 
-            function toggleChat() {
+            window.toggleChat = function() {
                 if (window.innerWidth <= 768) {
                     const isChatVisible = fullScreenChat.style.display === 'flex';
                     if (isChatVisible) {
@@ -920,117 +1146,177 @@ $conn->close();
                 }
             }
             
-            // Make toggleChat globally accessible
-            window.toggleChat = toggleChat;
-            document.getElementById('backToDashboardBtn').addEventListener('click', toggleChat);
-        });
+            document.getElementById('backToDashboardBtn').addEventListener('click', window.toggleChat);
 
-        const uploadedFiles = new Map();
-        const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
-        let fileToRemove = null;
+            // --- FILE MANAGEMENT LOGIC ---
+            const previewModal = new bootstrap.Modal(document.getElementById('previewModal'));
+            const confirmDeleteModal = new bootstrap.Modal(document.getElementById('confirmDeleteModal'));
+            const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+            
+            let activeFileInModal = null;
+            let deleteActionCallback = null;
 
-        function handleFileUpload(event, containerId) {
-            const files = event.target.files;
-            const container = document.getElementById(containerId);
+            // Helper function to create a new file preview element in the DOM
+            function createFilePreviewElement(fileId, fileName, fileType, filePath) {
+                const fileItem = document.createElement('div');
+                fileItem.className = 'file-preview-item';
+                fileItem.dataset.fileId = fileId;
+                fileItem.dataset.fileName = fileName;
+                fileItem.dataset.fileType = fileType;
+                fileItem.dataset.filePath = filePath;
 
-            for (const file of files) {
-                const fileId = `file-${Date.now()}-${Math.random()}`;
-                const reader = new FileReader();
+                let iconClass = 'bi-file-earmark-text';
+                if (fileType.startsWith('image/')) iconClass = 'bi-file-earmark-image';
+                if (fileType.includes('pdf')) iconClass = 'bi-file-earmark-pdf';
+                if (fileType.includes('word')) iconClass = 'bi-file-earmark-word';
 
-                reader.onload = function (e) {
-                    uploadedFiles.set(fileId, {
-                        name: file.name,
-                        type: file.type,
-                        dataUrl: e.target.result,
-                        element: null
-                    });
+                fileItem.innerHTML = `
+                    <i class="bi ${iconClass}"></i>
+                    <div class="file-name" title="${fileName}">${fileName}</div>
+                `;
+                addFileItemEventListeners(fileItem);
+                return fileItem;
+            }
 
-                    const fileItem = document.createElement('div');
-                    fileItem.className = 'file-preview-item';
-                    fileItem.dataset.fileId = fileId;
+            // Handles file uploads by sending them to the server
+            function handleFileUpload(event) {
+                const files = event.target.files;
+                const container = document.getElementById('pendingFiles');
+                const noFilesMessage = container.querySelector('p');
 
-                    let iconClass = 'bi-folder';
-                    if (file.type.startsWith('image/')) {
-                        iconClass = 'bi-image-fill';
-                    }
+                if (noFilesMessage) {
+                    noFilesMessage.remove();
+                }
 
-                    fileItem.innerHTML = `
-                        <i class="bi ${iconClass}"></i>
-                        <div class="file-name">${file.name}</div>
-                    `;
+                for (const file of files) {
+                    const formData = new FormData();
+                    formData.append('file', file);
 
-                    // Single-click to select
-                    fileItem.addEventListener('click', (event) => {
-                        // Deselect all other items if ctrl/cmd is not pressed
-                        if (!event.ctrlKey && !event.metaKey) {
-                            const allItems = container.querySelectorAll('.file-preview-item.selected');
-                            allItems.forEach(item => {
-                                if (item !== fileItem) {
-                                    item.classList.remove('selected');
-                                }
-                            });
+                    fetch('documents.php', { method: 'POST', body: formData })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.status === 'success') {
+                                const newFileElement = createFilePreviewElement(data.fileId, data.fileName, data.fileType, data.filePath);
+                                container.prepend(newFileElement);
+                            } else {
+                                console.error('Upload failed:', data.message);
+                                // Consider adding a user-friendly error message to the UI
+                            }
+                        })
+                        .catch(error => console.error('Error:', error));
+                }
+                event.target.value = ''; // Reset input
+            }
+
+            // Triggers the confirmation modal for deleting selected files
+            function triggerDeleteConfirmation() {
+                const activeTabPane = document.querySelector('.tab-content .tab-pane.active#pending');
+                if (!activeTabPane) {
+                    // Deletion is only allowed from the pending tab.
+                    // You might want to show a message here.
+                    return;
+                }
+                const container = activeTabPane.querySelector('.file-preview-container');
+                const selectedItems = container.querySelectorAll('.file-preview-item.selected');
+                
+                if (selectedItems.length === 0) return;
+
+                deleteActionCallback = () => performDelete(selectedItems);
+                confirmDeleteModal.show();
+            }
+
+            // Performs the actual deletion after confirmation
+            function performDelete(itemsToDelete) {
+                const fileIds = Array.from(itemsToDelete).map(item => item.dataset.fileId);
+                const formData = new FormData();
+                formData.append('action', 'delete');
+                fileIds.forEach(id => formData.append('ids[]', id));
+
+                fetch('documents.php', { method: 'POST', body: formData })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            itemsToDelete.forEach(item => item.remove());
+                        } else {
+                            console.error('Deletion failed:', data.message);
                         }
-                        fileItem.classList.toggle('selected');
-                    });
-
-                    // Double-click to preview
-                    fileItem.addEventListener('dblclick', () => {
-                        showPreview(fileId);
-                    });
-
-                    uploadedFiles.get(fileId).element = fileItem;
-                    container.appendChild(fileItem);
-                };
-
-                reader.readAsDataURL(file);
-            }
-        }
-
-        function showPreview(fileId) {
-            const fileData = uploadedFiles.get(fileId);
-            if (!fileData) return;
-
-            const modalBody = document.querySelector('#previewModal .modal-body');
-            const modalLabel = document.getElementById('previewModalLabel');
-            const downloadBtn = document.getElementById('modalDownloadBtn');
-
-            modalLabel.textContent = fileData.name;
-            downloadBtn.href = fileData.dataUrl;
-            downloadBtn.download = fileData.name;
-
-            if (fileData.type.startsWith('image/')) {
-                modalBody.innerHTML = `<img src="${fileData.dataUrl}" alt="Preview">`;
-            } else {
-                modalBody.innerHTML = `<div class="text-center p-4"><i class="bi bi-file-earmark-text icon-preview"></i></div>`;
+                    })
+                    .catch(error => console.error('Error:', error));
             }
 
-            fileToRemove = fileId;
-            previewModal.show();
-        }
+            // Shows the file preview in a modal
+            function showPreview(fileElement) {
+                activeFileInModal = fileElement;
+                const { fileId, fileName, fileType, filePath } = fileElement.dataset;
 
-        document.getElementById('modalRemoveBtn').addEventListener('click', () => {
-            if (fileToRemove) {
-                const fileData = uploadedFiles.get(fileToRemove);
-                if (fileData && fileData.element) {
-                    fileData.element.remove();
+                const modalBody = document.querySelector('#previewModal .modal-body');
+                document.getElementById('previewModalLabel').textContent = fileName;
+                document.getElementById('modalDownloadBtn').href = filePath;
+
+                // Only show the 'Remove' button for files in the pending tab
+                const isInPendingTab = fileElement.closest('#pending') !== null;
+                document.getElementById('modalRemoveBtn').style.display = isInPendingTab ? 'inline-block' : 'none';
+
+                if (fileType.startsWith('image/')) {
+                    modalBody.innerHTML = `<img src="${filePath}" alt="Preview" class="img-fluid">`;
+                } else {
+                    modalBody.innerHTML = `<div class="text-center p-4"><i class="bi bi-file-earmark-text icon-preview"></i><p class="mt-3">No preview available.</p></div>`;
                 }
-                uploadedFiles.delete(fileToRemove);
-                fileToRemove = null;
-                previewModal.hide();
+                previewModal.show();
             }
-        });
 
-        function deleteSelectedFiles(containerId) {
-            const container = document.getElementById(containerId);
-            const selectedItems = container.querySelectorAll('.file-preview-item.selected');
-            selectedItems.forEach(item => {
-                const fileId = item.dataset.fileId;
-                if (uploadedFiles.has(fileId)) {
-                    uploadedFiles.delete(fileId);
+            // Adds click and double-click event listeners to a file item
+            function addFileItemEventListeners(fileItem) {
+                fileItem.addEventListener('click', (event) => {
+                    const container = fileItem.closest('.file-preview-container');
+                    if (!event.ctrlKey && !event.metaKey) {
+                        container.querySelectorAll('.file-preview-item.selected').forEach(item => {
+                            if (item !== fileItem) item.classList.remove('selected');
+                        });
+                    }
+                    fileItem.classList.toggle('selected');
+                });
+                fileItem.addEventListener('dblclick', () => showPreview(fileItem));
+            }
+
+            // --- INITIAL EVENT LISTENER ATTACHMENT ---
+            document.querySelectorAll('.file-preview-item').forEach(addFileItemEventListeners);
+            
+            document.getElementById('fileUpload').onchange = handleFileUpload;
+            document.getElementById('photoUpload').onchange = handleFileUpload;
+            document.getElementById('deleteBtnContainer').onclick = triggerDeleteConfirmation;
+
+            // Listener for the final delete button in the confirmation modal
+            confirmDeleteBtn.addEventListener('click', () => {
+                if (typeof deleteActionCallback === 'function') {
+                    deleteActionCallback();
                 }
-                item.remove();
+                deleteActionCallback = null;
+                confirmDeleteModal.hide();
             });
-        }
+
+            // Listener for the remove button inside the preview modal
+            document.getElementById('modalRemoveBtn').addEventListener('click', () => {
+                if (activeFileInModal) {
+                    previewModal.hide();
+                    deleteActionCallback = () => performDelete([activeFileInModal]);
+                    confirmDeleteModal.show();
+                }
+            });
+
+            // Hide delete icon if not on the pending tab
+            const statusTabs = document.querySelectorAll('.status-tabs .nav-link');
+            const deleteIcon = document.getElementById('deleteBtnContainer');
+            statusTabs.forEach(tab => {
+                tab.addEventListener('shown.bs.tab', function(event) {
+                    if (event.target.id === 'pending-tab') {
+                        deleteIcon.style.display = 'flex';
+                    } else {
+                        deleteIcon.style.display = 'none';
+                    }
+                });
+            });
+        });
     </script>
 </body>
 
