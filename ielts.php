@@ -409,13 +409,14 @@
     </section>
   </main>
 
-  <div id="footer-placeholder"></div>
-  <script>   // SCRIPT TO FETCH AND LOAD FOOTER
+  <?php include 'footer.php'; ?>
+
+<script>   // SCRIPT TO FETCH AND LOAD FOOTER
     document.addEventListener("DOMContentLoaded", function () {
       const placeholder = document.getElementById("footer-placeholder");
 
       // Since this file is in a subfolder, the path is relative to the root
-      fetch('footer-fragment.php')
+      fetch('footer.php')
         .then(response => {
           if (!response.ok) {
             throw new Error(`HTTP error! Status: ${response.status} - Could not find footer-fragment.php`);
